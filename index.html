@@ -737,7 +737,7 @@ const seen=(px,py)=>ex[cl(py/G|0,0,GN-1)*GN+cl(px/G|0,0,GN-1)];
 const EV=[11,22,33],Lm=u=>1+.12*(u.lv-1),Em=u=>1+.35*u.ev,carry=u=>Math.round((7+2*(u.lv-1))*(1+.2*u.ev)),vis=u=>120+15*(u.lv-1)+10*u.ev,patk=u=>T[u.t].atk*Lm(u)*Em(u),hl=u=>9*Lm(u)*Em(u);
 function calc(u){const d=T[u.t],r=u.hp/u.mh,fr=u.fm?u.f/u.fm:1;u.mh=d.hp*Lm(u)*Em(u);u.hp=Math.min(u.mh,r*u.mh);u.sp=d.sp*(1+.03*(u.lv-1))*(1+.08*u.ev);u.fm=u.t==='s'?(1600+260*(u.lv-1))/(1-.12*u.ev):0;u.f=u.fm*fr;u.as=(1+.03*(u.lv-1))*(1+.06*u.ev)}
 function lvup(u){const c=20+16*u.lv;if(u.lv>=11||st.ore<c)return 0;st.ore-=c;SS().spUp+=c;u.lv++;calc(u);sfx('up');return 1}
-const sellV=u=>{let L=0;for(let k=1;k<u.lv;k++)L+=20+16*k;return Math.floor(T[u.t].c*.5+L*.3)};
+const sellV=u=>{let L=0;for(let k=1;k<u.lv;k++)L+=20+16*k;return Math.floor(T[u.t].c*.6+L*.3)};
 function doUp(k){if(st.won)return;
  if(k==='sell'){const us=[...sel];if(!us.length){msg('판매할 로봇을 선택해 주세요');return}if(!sa){sa=1;setTimeout(()=>sa=0,3000);msg(us.some(u=>u.ev)?'⚠ 진화한 로봇이 있어요. 진화석은 돌려받지 못해요. 한 번 더 누르면 판매해요':'한 번 더 누르면 판매해요');return}sa=0;const v=us.reduce((a,u)=>a+sellV(u),0);st.ore+=v;st.rb=st.rb.filter(u=>!sel.has(u));Object.keys(grp).forEach(g=>grp[g]=grp[g].filter(u=>!sel.has(u)));sel=new Set();sfx('ore');msg('로봇 '+us.length+'대를 판매했어요 · 광석 +'+v);return}
  if(k==='evo'){let n=0,need=0;[...sel].forEach(u=>{if(u.lv<11||u.ev>=3)return;const c=EV[u.ev];if(st.stone<c){need=c;return}st.stone-=c;SS().stUsed+=c;u.ev++;calc(u);n++});
@@ -897,7 +897,7 @@ $('cnt').innerHTML=Object.keys(T).map(k=>`<div><i class="d" style="background:${
  ['sel','evo','sell','c','r','h','m','s'].forEach(k=>tb.up.appendChild($('u'+k)));
  ['aore','astone','amap','amax','aheal','atime','ar0','ar1','ar2','ar3','ar4','agod','aspd','akill','aevo','araid'].forEach(k=>tb.adm.appendChild($('x'+k)));
  $('p1').remove();
- const DESC={bs:'정찰 로봇 · 체력 20 · 이속 150 · 어둠을 밝혀요. 연료가 다 떨어지면 고장나요.',bm:'채굴 로봇 · 체력 30 · 광산을 누르면 자동으로 캐서 날라요. 진화 광산은 6레벨부터.',bc:'근접 로봇 · 체력 70 · 공격력 7 · 앞에서 버티는 탱커예요.',br:'원거리 로봇 · 체력 40 · 공격력 8 · 사거리 150.',bh:'지원 로봇 · 체력 45 · 주변 아군을 치료해요.',ivbomb:'시야 폭탄 · 던진 곳 주변(반경 180)을 영구적으로 밝혀요. 밝혀진 곳은 로봇도 보낼 수 있어요. 재사용 대기 5분.',idrone:'정찰 드론 · 지도 아무 곳에 던져 4초 동안 시야를 확보해요. 그곳으로 로봇은 보낼 수 없어요. 재사용 대기 8초.',ioilb:'기름 · 사서 보관해 두었다가 기름 들기로 사용해요.',ioilh:'기름 들기 · 원(반경 70) 안의 우리 로봇 모두 20초 동안 이속·공속 +20%.',usel:'선택한 로봇을 레벨업해요. 최대 11레벨.',usell:'선택한 로봇을 판매해요. 구매가의 50% + 업그레이드에 쓴 광석의 30%를 돌려받아요. 진화석은 돌려받지 못해요. 실수 방지를 위해 두 번 눌러야 해요.',uevo:'선택한 11레벨 로봇을 진화시켜요. 진화석 11 → 22 → 33.',uc:'근접 로봇 전체를 한 번에 레벨업해요.',ur:'원거리 로봇 전체를 한 번에 레벨업해요.',uh:'지원 로봇 전체를 한 번에 레벨업해요.',um:'채굴 로봇 전체를 한 번에 레벨업해요.',us:'정찰 로봇 전체를 한 번에 레벨업해요.'};
+ const DESC={bs:'정찰 로봇 · 체력 20 · 이속 150 · 어둠을 밝혀요. 연료가 다 떨어지면 고장나요.',bm:'채굴 로봇 · 체력 30 · 광산을 누르면 자동으로 캐서 날라요. 진화 광산은 6레벨부터.',bc:'근접 로봇 · 체력 70 · 공격력 7 · 앞에서 버티는 탱커예요.',br:'원거리 로봇 · 체력 40 · 공격력 8 · 사거리 150.',bh:'지원 로봇 · 체력 45 · 주변 아군을 치료해요.',ivbomb:'시야 폭탄 · 던진 곳 주변(반경 180)을 영구적으로 밝혀요. 밝혀진 곳은 로봇도 보낼 수 있어요. 재사용 대기 5분.',idrone:'정찰 드론 · 지도 아무 곳에 던져 4초 동안 시야를 확보해요. 그곳으로 로봇은 보낼 수 없어요. 재사용 대기 8초.',ioilb:'기름 · 사서 보관해 두었다가 기름 들기로 사용해요.',ioilh:'기름 들기 · 원(반경 70) 안의 우리 로봇 모두 20초 동안 이속·공속 +20%.',usel:'선택한 로봇을 레벨업해요. 최대 11레벨.',usell:'선택한 로봇을 판매해요. 구매가의 60% + 업그레이드에 쓴 광석의 30%를 돌려받아요. 진화석은 돌려받지 못해요. 실수 방지를 위해 두 번 눌러야 해요.',uevo:'선택한 11레벨 로봇을 진화시켜요. 진화석 11 → 22 → 33.',uc:'근접 로봇 전체를 한 번에 레벨업해요.',ur:'원거리 로봇 전체를 한 번에 레벨업해요.',uh:'지원 로봇 전체를 한 번에 레벨업해요.',um:'채굴 로봇 전체를 한 번에 레벨업해요.',us:'정찰 로봇 전체를 한 번에 레벨업해요.'};
  $('shopw').addEventListener('mouseover',e=>{const b=e.target.closest('button');if(b&&DESC[b.id])$('swinfo').textContent=DESC[b.id]});
  $('shopw').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.close)$('shopw').hidden=true;if(b.dataset.tab){$('swtabs').querySelectorAll('button').forEach(q=>q.classList.toggle('on',q===b));['prod','item','up','adm'].forEach(k=>$('sp_'+k).hidden=k!==b.dataset.tab)}});
 })();
@@ -1182,7 +1182,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261123-034237';
+const APPVER='20261123-034652';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
