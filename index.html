@@ -361,8 +361,10 @@ canvas.bpv{width:92px!important;aspect-ratio:140/84;border-radius:6px}
 #shopw .sp button:not(.no){border-color:#2fa860;box-shadow:inset 3px 0 0 #3ae07a}
 #shopw .sp button.no{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
 .sw-head{user-select:none}
+#updb{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:40;background:linear-gradient(#24313e,#141b22);border:2px solid #3ae07a;border-radius:10px;padding:8px 12px;color:#c8ffd8;font-size:14px;font-weight:700;display:flex;gap:8px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+#updb[hidden]{display:none!important}#updb button{flex:none;padding:6px 12px;font-size:13px;border-radius:7px;border-left-width:1px}#updgo{background:linear-gradient(#3ae07a,#1e8a4a)!important;color:#06200f!important;border-color:#9effa8!important}
 </style></head><body>
-<div id="lobby"><div class="lb">
+<div id="updb" hidden>🔄 새 업데이트가 나왔어요 <button id="updgo">저장하고 업데이트</button><button id="updx">나중에</button></div><div id="lobby"><div class="lb">
 <div class="logo">SOROK</div><div class="sub">외계 기지 정복 전략</div>
 <div class="cs">청석<b id="csv">0</b></div> <div class="cs stc">별석<b id="ssv">0</b></div><div id="lmsg"></div><div id="boxw" hidden><div class="bxin"><div id="bxanim"></div><div id="bxsum"></div><div id="bxres"></div><button data-l="boxok" class="go">확인</button><button data-l="boxskip" id="bxskip" class="bxsk" hidden>건너뛰기 ▸▸</button></div></div><div id="cashw" hidden><div class="cbox"><div class="gem"></div><div id="cashq"></div><div class="warn">가상 결제예요. 실제로 돈이 빠져나가지 않아요.</div><div class="row2"><button data-l="cashno">취소</button><button data-l="cashok" class="go">결제하기</button></div></div></div>
 <div id="lmain" class="lhome"><div class="hplay"><canvas id="homepv" width="560" height="300"></canvas><div class="hpov"><div class="hpt">출격 준비 완료</div><div class="hps" id="hpsub"></div><div class="hpbtn"><button data-l="cont" id="bcont" class="go" hidden>이어하기</button><button data-l="play" class="go">새 게임</button></div></div></div><div class="htiles"><button data-l="shop" class="ht t1"><b>상점</b><small id="ht_shop">소로 상자 · ★ 걸작 · 세트</small></button><button data-l="store" class="ht t2"><b>창고</b><small id="ht_store"></small></button><button data-l="pass" class="ht t3"><b>배틀패스</b><small id="ht_pass"></small><div class="htbar"><i id="ht_pb"></i></div></button><button data-l="set" class="ht t4"><b>설정</b><small>조작 · 관리자 · 데이터</small></button></div><div class="promo" id="promo"></div></div>
@@ -1178,5 +1180,12 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
+const APPVER='20261123-033453';
+function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
+(function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
+ try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+ const chk=()=>fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{if(j&&j.v&&j.v!==APPVER)newVer()}).catch(()=>{});
+ setTimeout(chk,4000);setInterval(chk,90000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})();
+$('updgo').onclick=()=>{try{if(scene==='game'&&!st.lost&&!st.won)saveGame()}catch(e){}location.reload()};$('updx').onclick=()=>$('updb').hidden=true;
 fit();try{new ResizeObserver(fit).observe($('stage'))}catch(e){}reset();lobby('lmain','');requestAnimationFrame(loop);
 </script></body></html>
