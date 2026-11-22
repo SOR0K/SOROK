@@ -745,7 +745,7 @@ function doUp(k){if(st.won)return;
  const us=k==='sel'?[...sel]:st.rb.filter(u=>u.t===k).sort((a,b)=>a.lv-b.lv);let n=0;us.forEach(u=>{if(lvup(u))n++});
  msg(n?n+'대 업그레이드 완료!':us.some(u=>u.lv<11)?'광석이 부족해요':'이미 최고 레벨이에요')}
 function info(u){const d=T[u.t];let s=d.n+' Lv '+u.lv+'/11 · 진화 '+u.ev+'/3\n공격력 '+(d.atk?patk(u).toFixed(1):'-')+' · 체력 '+Math.ceil(u.hp)+'/'+Math.round(u.mh)+' · 이속 '+Math.round(u.sp)+(u.t==='m'||u.t==='s'||u.t==='h'?'':'\n공속 '+(u.as||1).toFixed(2)+'회/초');
- if(u.t==='m')s+='\n운반량 '+carry(u)+' (진화 광산은 6레벨부터)';if(u.t==='s')s+='\n시야 '+vis(u)+' · 연료 '+Math.round(u.f)+'/'+Math.round(u.fm);if(u.t==='h')s+='\n치유 '+hl(u).toFixed(1)+'/초';if(0)s+='\n기지 방어 고정 중 (사거리 +30%, 공격력 +20%)';if(u.oilT>0)s+='\n기름 효과 '+Math.ceil(u.oilT)+'초 (이속·공속 +20%)';return s}
+ if(u.t==='m')s+='\n캔 광석 '+Math.floor(u.mo||0)+' · 진화석 '+(u.ms||0)+(u.c?' · 운반 중 '+u.c:'')+'\n운반량 '+carry(u)+' (진화 광산은 6레벨부터)';if(u.t==='s')s+='\n시야 '+vis(u)+' · 연료 '+Math.round(u.f)+'/'+Math.round(u.fm);if(u.t==='h')s+='\n치유 '+hl(u).toFixed(1)+'/초';if(0)s+='\n기지 방어 고정 중 (사거리 +30%, 공격력 +20%)';if(u.oilT>0)s+='\n기름 효과 '+Math.ceil(u.oilT)+'초 (이속·공속 +20%)';return s}
 const eco=()=>1+.03*st.outs.reduce((a,o)=>a+(o.cap?1:0),0);
 const inc=()=>st.outs.reduce((s,o)=>s+(o.cap?.3+.25*o.s:0),0)*eco();
 const rate=()=>{const n=st.t,w=Math.min(15,Math.max(n,1));st.log=st.log.filter(e=>n-e[0]<=15);return st.log.reduce((a,e)=>a+e[1],0)/w+inc()};
@@ -773,6 +773,20 @@ function hit(a,b,d){if(a.base)sfxAt('myturret',a.x,a.y);else if(a.s!==undefined)
  else{if(!(st.god&&b.team===0))b.hp-=d;boom(b.x,b.y,a.team===0?(k?k.a:'#fff6d6'):'#ff7a66',k)}}
 function boom(px,py,col,k){st.fx.push({imp:1,c:px,d:py,t:.18,col});if(k)for(let i=0;i<7;i++){const an=Math.random()*7,v=rnd(40,130);st.pt.push({x:px,y:py,vx:Math.cos(an)*v,vy:Math.sin(an)*v,t:rnd(.3,.6),col:k.pc[i%2]})}}
 const SLOTS=()=>{const B=st.B;return [0,1,2,3].map(i=>{const a=-Math.PI/2+(i+.5)*Math.PI/8;return{x:B.x+Math.cos(a)*170,y:B.y+Math.sin(a)*170}})};
+function aAtk(u,t){hit(u,t,patk(u));u.cd=1/((u.as||1)*(u.oilT>0?1.2:1))}
+function smartAI(u,dt){u.ai=(u.ai||0)-dt;
+ if(u.dodge>0){u.dodge-=dt;const o=u.dgo;if(o&&!o.cap){const d=dist(u.x,u.y,o.x,o.y)||1;if(d<240)mv(u,u.x+(u.x-o.x)/d*40,u.y+(u.y-o.y)/d*40,dt)}return true}
+ if(u.tgt&&(u.tgt.hp<=0||u.tgt.cap)){u.tgt=u.fo&&!u.fo.cap&&u.fo.hp>0?u.fo:null;u.fo=null}
+ if(u.ai<=0){u.ai=.25;const E=st.en.filter(e=>seen(e.x,e.y)&&dist(u.x,u.y,e.x,e.y)<260);
+  const to=st.outs.find(o=>!o.cap&&o.tt===u);if(to&&u.hp<u.mh*.45&&(to.stk||0)>=2&&st.rb.some(a=>a!==u&&(a.t==='c'||a.t==='r')&&a.hp>a.mh*.5&&dist(a.x,a.y,to.x,to.y)<260)){u.dodge=1.6;u.dgo=to;to.tt=null;to.stk=0;return true}
+  if(!u.tgt&&u.tx==null){const R=u.rng+70;let b=null,bs=1e9;for(const e of E){const d=dist(u.x,u.y,e.x,e.y);if(d>220)continue;const sc=d*.6+(e.hp/e.mh)*120-(d<R?60:0);if(sc<bs){bs=sc;b=e}}
+   if(b)u.tgt=b;else{const o=st.outs.find(o=>!o.cap&&seen(o.x,o.y)&&dist(u.x,u.y,o.x,o.y)<u.rng+40);if(o)u.tgt=o}}
+  else if(u.tgt&&u.tgt.team===1){let b=u.tgt,bs=b.hp/b.mh;for(const e of E){if(dist(u.x,u.y,e.x,e.y)<=u.rng+5&&e.hp/e.mh<bs-.35){b=e;bs=e.hp/e.mh}}u.tgt=b}
+  if(u.t==='r'){const m=near(u,E.filter(e=>e.t!=='r'),55);if(m&&u.cd>.25){u.kite=.35;u.kx=m}}
+  if(u.hp<u.mh*.2){const h=near(u,st.rb.filter(a=>a.t==='h'),320);if(h)u.rh=h}else if(u.hp>u.mh*.6)u.rh=null}
+ if(u.kite>0&&u.kx&&u.kx.hp>0){u.kite-=dt;const d=dist(u.x,u.y,u.kx.x,u.kx.y)||1;mv(u,u.x+(u.x-u.kx.x)/d*30,u.y+(u.y-u.kx.y)/d*30,dt);if(u.cd<=0&&u.tgt&&u.tgt.hp>0&&dist(u.x,u.y,u.tgt.x,u.tgt.y)<=u.rng)aAtk(u,u.tgt);return true}
+ if(u.rh&&u.rh.hp>0&&u.tx==null){if(dist(u.x,u.y,u.rh.x,u.rh.y)>45)mv(u,u.rh.x,u.rh.y,dt);if(u.cd<=0){const e=near(u,st.en.filter(e=>seen(e.x,e.y)),u.rng);if(e)aAtk(u,e)}return true}
+ return false}
 function ctrl(u,dt){
  u.cd-=dt;if(u.oilT>0)u.oilT-=dt;
  if(u.t==='s'){const ox=u.x,oy=u.y;if(u.tx!=null&&mv(u,u.tx,u.ty,dt,1)<=2)u.tx=null;u.f-=dist(ox,oy,u.x,u.y);reveal(u.x,u.y,vis(u));if(u.f<=0){u.hp=0;msg('정찰 로봇의 연료가 떨어져 고장났어요')}return}
@@ -780,13 +794,16 @@ function ctrl(u,dt){
    if(m.amt<=0&&u.st!=='back'){u.mine=null;msg('광산이 바닥났어요. 다른 광산을 지정해 주세요')}
    else if(u.st==='go'){if(mv(u,m.x,m.y,dt,1)<=2){u.st='dig';u.w=3}}
    else if(u.st==='dig'){u.w-=dt;if(u.w<=0){const c=Math.min(m.ev?Math.max(1,Math.round(carry(u)/5)):carry(u),m.amt);m.amt-=c;u.c=c;u.st='back'}}
-   else if(mv(u,B.x,B.y,dt,1)<=2){if(u.mine&&u.mine.ev){st.stone+=u.c;SS().stEarn+=u.c}else{const g=u.c*eco();st.ore+=g;sfxAt('ore',u.x,u.y);SS().earn+=g;st.log.push([st.t,g])}u.c=0;u.st='go'}}
+   else if(mv(u,B.x,B.y,dt,1)<=2){if(u.mine&&u.mine.ev){st.stone+=u.c;u.ms=(u.ms||0)+u.c;SS().stEarn+=u.c}else{const g=u.c*eco();st.ore+=g;u.mo=(u.mo||0)+g;sfxAt('ore',u.x,u.y);SS().earn+=g;st.log.push([st.t,g])}u.c=0;u.st='go'}}
   else if(u.tx!=null&&mv(u,u.tx,u.ty,dt,1)<=2)u.tx=null;return}
+ if(u.t==='c'||u.t==='r'){if(smartAI(u,dt))return}
  if(u.tgt&&(u.tgt.hp<=0||u.tgt.cap))u.tgt=null;
  if(u.tgt&&u.t!=='h'){const d=dist(u.x,u.y,u.tgt.x,u.tgt.y);
   if(d>u.rng+(u.tgt.s?20:0)){if(mv(u,u.tgt.x,u.tgt.y,dt)<0)u.tgt=null}else if(u.cd<=0){hit(u,u.tgt,patk(u));u.cd=1/((u.as||1)*(u.oilT>0?1.2:1))}return}
  if(u.tx!=null){if(mv(u,u.tx,u.ty,dt)<=2)u.tx=null;return}
- if(u.t==='h'){let b=null;for(const a of st.rb)if(a.hp<a.mh&&dist(u.x,u.y,a.x,a.y)<u.rng&&(!b||a.hp/a.mh<b.hp/b.mh))b=a;if(b){b.hp=Math.min(b.mh,b.hp+hl(u)*dt);if(Math.random()<dt*8)st.fx.push({a:u.x,b:u.y,c:b.x,d:b.y,t:.15,col:SKIN?SKIN.a:'#8be28b'})}return}
+ if(u.t==='h'){let b=null;for(const a of st.rb)if(a.hp<a.mh&&dist(u.x,u.y,a.x,a.y)<u.rng&&(!b||a.hp/a.mh<b.hp/b.mh))b=a;
+  {const th=near(u,st.en.filter(e=>seen(e.x,e.y)),110);if(th){const d=dist(u.x,u.y,th.x,th.y)||1;mv(u,u.x+(u.x-th.x)/d*30,u.y+(u.y-th.y)/d*30,dt)}else if(!b){const al=near(u,st.rb.filter(a=>a.t==='c'||a.t==='r'),500);if(al&&dist(u.x,u.y,al.x,al.y)>90)mv(u,al.x,al.y,dt)}}
+  if(b){b.hp=Math.min(b.mh,b.hp+hl(u)*dt);if(Math.random()<dt*8)st.fx.push({a:u.x,b:u.y,c:b.x,d:b.y,t:.15,col:SKIN?SKIN.a:'#8be28b'})}return}
  const e=near(u,[...st.en,...st.outs.filter(o=>!o.cap)].filter(e=>seen(e.x,e.y)),220);if(e)u.tgt=e;
 }
 function mkR(t,lv,ev,px,py){const m=t!=='r',D=DF[diff],L=1+.12*(lv-1),E=1+.32*ev,h=(m?60:38)*L*E*D.h;return{id:uid++,team:1,t,x:px,y:py,hx:px,hy:py,lv,ev,hp:h,mh:h,sp:(m?80:75)*(1+.03*(lv-1)),rng:m?30:150,atk:(m?5.5:7)*L*E*D.a,cd:0,as:(1+.03*(lv-1))*(1+.06*ev),raid:1,o:null}}
@@ -1185,7 +1202,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261123-035240';
+const APPVER='20261123-040732';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
