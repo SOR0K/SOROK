@@ -787,6 +787,7 @@ function bgPreview(id){try{const a=au();if(a&&a.state!=='running')a.resume()}cat
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tprev]');if(!b)return;e.stopPropagation();bgPreview(b.dataset.tprev)},true);
 const PN=[['11월 23일 저녁 업데이트',[
  ['⚔ 전투',['기지 공격 명령을 내리면 로봇들이 기지 앞(포탑 사거리 밖)에 공격 대형으로 모였다가 한꺼번에 돌격해요 (근접 앞 · 원거리 가운데 · 지원 뒤)','지원 로봇은 공격 명령 때 적 기지로 뛰어들지 않고 아군 뒤를 따라가요','여러 로봇에게 이동 명령을 내리면 가장 느린 로봇 속도에 맞춰 같이 움직여요 (진화한 지원 로봇이 혼자 앞서가지 않아요)']],
+ ['💚 지원 로봇',['지원 로봇이 다친 아군을 찾아가 치료 사거리 안으로 들어가요 (너무 뒤에 머물지 않아요)','치료 사거리 끝자락에 서서 적과 거리를 두고, 아군 체력이 35% 아래면 더 붙어서 살려요','자기 체력이 60% 아래로 떨어지거나 적이 바로 붙으면 뒤로 빠져요']],
  ['🔭 시야 폭탄 · 드론 · 깃발',['시야 폭탄 재사용 대기가 후반으로 갈수록 짧아져요: 20분까지 5분 → 40분 4분 → 60분 3분 → 80분부터 2분','정찰 드론 재사용 대기도 짧아져요: 20분까지 8초 → 50분 5.5초 → 80분부터 3초','단축키: 1 정찰 · 2 채굴 · 3 근접 · 4 원거리 · 5 지원 (종류별 전체 선택) · 6 또는 스페이스 = 기름 들기','T 키: 마우스 위치에 번호 깃발을 꽂아요 (지도·미니맵에 표시, 최대 20개, 같은 곳에서 다시 T를 누르면 뽑혀요)']],
  ['🎵 테마 배경음',['테마마다 배경음이 달라져요 (차가운 종소리 · 경쾌한 · 묵직한 · 전자음 4가지 분위기)','크로 테마는 반짝이는 소리가 한 겹 더 들어가요','★ 걸작 테마 3종은 웅장한 전용 테마곡 (천상 · 화산 · 프리즘 각각 다르게)','걸작 세트를 완성하면 레이드 때 전용 편곡이 나와요','상점 테마 카드에 🎵 미리듣기 버튼 (15초)','설정 → 배경음에서 가진 테마 곡을 골라 들을 수 있어요']],
  ['🔍 정보 표시',['외계 기지에 마우스를 올리면 구역 · 레벨 · 체력 · 포탑 공격력 · 수비대 수 · 정복 보상이 보여요','우리 기지에 올리면 체력 · 포탑 · 우물 정보','광산에 올리면 남은 광석/진화석과 채굴 중인 로봇 수']],
@@ -922,7 +923,11 @@ function ctrl(u,dt){
   if(d>u.rng+(u.tgt.s?20:0)){if(mv(u,u.tgt.x,u.tgt.y,dt)<0)u.tgt=null}else if(u.cd<=0){hit(u,u.tgt,patk(u));u.cd=1/((u.as||1)*(u.oilT>0?1.2:1))}return}
  if(u.tx!=null){if(mv(u,u.tx,u.ty,dt)<=2)u.tx=null;return}
  if(u.t==='h'){let b=null;for(const a of st.rb)if(a.hp<a.mh&&dist(u.x,u.y,a.x,a.y)<u.rng&&(!b||a.hp/a.mh<b.hp/b.mh))b=a;
-  {const th=near(u,st.en.filter(e=>seen(e.x,e.y)),110);if(th){const d=dist(u.x,u.y,th.x,th.y)||1;mv(u,u.x+(u.x-th.x)/d*30,u.y+(u.y-th.y)/d*30,dt)}else if(!b){const al=near(u,st.rb.filter(a=>a.t==='c'||a.t==='r'),500);if(al&&dist(u.x,u.y,al.x,al.y)>90)mv(u,al.x,al.y,dt)}}
+  {const EN=st.en.filter(e=>seen(e.x,e.y)),ne=()=>{let m=1e9;for(const e of EN){const d=dist(u.x,u.y,e.x,e.y);if(d<m)m=d}return m},th=near(u,EN,95);
+   if(th&&(u.hp<u.mh*.6||dist(u.x,u.y,th.x,th.y)<55)){const d=dist(u.x,u.y,th.x,th.y)||1;mv(u,u.x+(u.x-th.x)/d*30,u.y+(u.y-th.y)/d*30,dt)}
+   else{let tA=null,tw=1e9;for(const a of st.rb){if(a===u||a.t==='s'||a.t==='m'||a.hp>=a.mh)continue;const d=dist(u.x,u.y,a.x,a.y);if(d>460)continue;const w=a.hp/a.mh+d/900;if(w<tw){tw=w;tA=a}}
+    const fol=tA||near(u,st.rb.filter(a=>a.t==='c'||a.t==='r'),500),want=tA?u.rng*.85:100;
+    if(fol&&dist(u.x,u.y,fol.x,fol.y)>want){const ox=u.x,oy=u.y,n0=ne();mv(u,fol.x,fol.y,dt);const n1=ne();if(n1<80&&n1<n0&&!(tA&&tA.hp<tA.mh*.35&&u.hp>u.mh*.5)){u.x=ox;u.y=oy}}}}
   if(b){b.hp=Math.min(b.mh,b.hp+hl(u)*dt);if(Math.random()<dt*8)st.fx.push({a:u.x,b:u.y,c:b.x,d:b.y,t:.15,col:SKIN?SKIN.a:'#8be28b'})}return}
  const e=near(u,[...st.en,...st.outs.filter(o=>!o.cap)].filter(e=>seen(e.x,e.y)),220);if(e)u.tgt=e;
 }
@@ -1443,7 +1448,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261124-012136';
+const APPVER='20261124-012556';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
