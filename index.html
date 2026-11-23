@@ -811,7 +811,7 @@ function reset(){
  for(let n=0,g=0;n<8&&g<5000;g++){const p={x:rnd(100,W-100),y:rnd(100,W-100)};if(dist(p.x,p.y,B.x,B.y)>1100&&mines.every(m=>dist(m.x,m.y,p.x,p.y)>200)){mines.push({x:p.x,y:p.y,amt:150,ev:1});n++}}
  const outs=[];for(let g=0;outs.length<50&&g<30000;g++){const p={x:rnd(150,W-150),y:rnd(150,W-150)},d=dist(p.x,p.y,B.x,B.y);
   if(d>800&&outs.every(o=>dist(o.x,o.y,p.x,p.y)>380)&&mines.every(m=>dist(m.x,m.y,p.x,p.y)>(m.safe?520:110))){outs.push({x:p.x,y:p.y,d})}}
- {const D=DF[diff],ds=outs.map(o=>o.d).sort((a,b)=>b-a),MD=ds[Math.min(2,ds.length-1)]||2000;outs.forEach(o=>{const dn=cl((o.d-800)/(MD-800),0,1),lv=cl(Math.round(1+10*Math.pow(dn,D.p)),1,11),tr=Math.min(6,Math.floor(dn*7)),ev=tr>=D.e?(tr>=6?3:tr>=5?2:1):0,s=.5+8*dn,h=(130+1100*dn*dn)*D.h;Object.assign(o,{s,dn,lv,ev,mx:h,hp:h,atk:(4+10*dn)*D.a,cap:false,al:0,cd:0});delete o.d})}
+ {const D=DF[diff],ds=outs.map(o=>o.d).sort((a,b)=>b-a),MD=ds[Math.min(2,ds.length-1)]||2000;outs.forEach(o=>{const dn=cl((o.d-800)/(MD-800),0,1),tr=Math.min(6,Math.floor(dn*7)),lv=tr>=6?11:cl(Math.round(1+10*Math.pow(dn,D.p)),1,11),ev=tr>=D.e?(tr>=6?3:tr>=5?2:1):0,s=.5+8*dn,h=(130+1100*dn*dn)*D.h;Object.assign(o,{s,dn,lv,ev,mx:h,hp:h,atk:(4+10*dn)*D.a,cap:false,al:0,cd:0});delete o.d})}
  st={B,ore:70,stone:0,mines,outs,rb:[],en:[],fx:[],pr:[],pt:[],dr:[],oil:0,log:[],lv:{m:0,a:0,r:0,s:0},won:false,t:0};
  outs.forEach(o=>{for(let i=0,n=Math.max(2,Math.round([4,5,6,8,10,13,16][Math.min(6,Math.floor(o.dn*7))]*DF[diff].n)),ne=o.ev?Math.max(1,Math.round(n*.25)):0;i<n;i++)st.en.push(mkE(o,Math.random()<.5?'c':'r',i<ne));st.en.push(mkE(o,'k',o.ev>0&&Math.random()<.25))});
  sel=new Set();cam={x:0,y:W-VH};msg('정찰 로봇을 만들어 주변을 밝혀 보세요. 정찰 로봇은 연료가 다 떨어지면 고장나니 신중하게 보내세요.');
@@ -865,10 +865,13 @@ function raid(ft){const mxT=st.t<2700?1:st.t<3600?2:st.t<4800?3:4,tier=ft!=null?
  for(let i=0;i<n;i++){const ev=tier>=2&&Math.random()<.15*tier?Math.min(3,tier-1):0;st.en.push(mkR(Math.random()<.55?'c':'r',lv,ev,ax+rnd(-80,80),ay+rnd(-80,80)))}
  st.raidN=(st.raidN||0)+1;sfx('raid');msg('🚨 '+nm+' 레이드 출현! '+n+'마리가 기지로 몰려와요 (Lv '+lv+')')}
 function hitB(u){const B=st.B;if(!st.god)B.hp-=u.atk;sfx('basehit');st.fx.push({imp:1,c:B.x,d:B.y,t:.18,col:'#ff7a66'});st.fx.push({txt:'-'+Math.round(u.atk),c:B.x+rnd(-24,24),d:B.y-40,t:.9});u.cd=1/(u.as||1);if(!st.bw||st.t-st.bw>8){st.bw=st.t;msg('⚠ 기지가 공격받고 있어요! (Q로 기지 보기)')}}
+function ePick(u,L,o){let b=null,bs=1e9;for(const r of L){if(r.hp<=0)continue;const dd=dist(u.x,u.y,r.x,r.y),rg=(u.rng||30)+60,sc=dd*.9+(r.hp/r.mh)*110-(dd<rg&&r.t==='h'?40:dd<rg&&r.t==='r'?20:0)+(r.t==='m'||r.t==='s'?40:0)-(o&&r.tgt===o?35:0);if(sc<bs){bs=sc;b=r}}return b}
+function eKite(u,dt,lx,ly,lr){if(u.rng<=40||u.cd<.3)return false;const m=near(u,st.rb.filter(r=>r.t==='c'),58);if(!m)return false;const d=dist(u.x,u.y,m.x,m.y)||1,nx=u.x+(u.x-m.x)/d*30,ny=u.y+(u.y-m.y)/d*30;if(lx!=null&&dist(nx,ny,lx,ly)>lr)return false;mv(u,nx,ny,dt,1);return true}
 function ectrl(u,dt){const o=u.o;u.cd-=dt;
- if(u.raid){const B=st.B,t=near(u,st.rb,220);if(t){const d=dist(u.x,u.y,t.x,t.y);if(d>u.rng)mv(u,t.x,t.y,dt,1);else if(u.cd<=0){hit(u,t,u.atk);u.cd=1/(u.as||1)}return}if(dist(u.x,u.y,B.x,B.y)>45)mv(u,B.x,B.y,dt,1);else if(u.cd<=0)hitB(u);return}
+ if(u.raid){u.eai=(u.eai||0)-dt;if(u.eai<=0||!u.et||u.et.hp<=0||dist(u.x,u.y,u.et.x,u.et.y)>260){u.eai=.4;u.et=ePick(u,st.rb.filter(r=>dist(u.x,u.y,r.x,r.y)<220),null)}const B=st.B,t=u.et;if(t&&eKite(u,dt))return;if(t){const d=dist(u.x,u.y,t.x,t.y);if(d>u.rng)mv(u,t.x,t.y,dt,1);else if(u.cd<=0){hit(u,t,u.atk);u.cd=1/(u.as||1)}return}if(dist(u.x,u.y,B.x,B.y)>45)mv(u,B.x,B.y,dt,1);else if(u.cd<=0)hitB(u);return}
  if(u.t==='k'){if(u.ag&&u.ag.hp<=0)u.ag=near(u,st.rb,400);if(u.ag){const d=dist(u.x,u.y,u.ag.x,u.ag.y);if(d>u.rng)mv(u,u.ag.x,u.ag.y,dt,1);else if(u.cd<=0){hit(u,u.ag,u.atk);u.cd=1/(u.as||1)}return}const B=st.B;if(B.hp!==undefined&&dist(u.x,u.y,B.x,B.y)<320){if(dist(u.x,u.y,B.x,B.y)>45)mv(u,B.x,B.y,dt,1);else if(u.cd<=0){hitB(u);}return}}
- const p=o.al>0?near(o,st.rb,420):null;
+ let p=null;if(o.al>0){if(!o.ft||o.ft.hp<=0||dist(o.x,o.y,o.ft.x,o.ft.y)>440||st.t-(o.fts||0)>.6){o.fts=st.t;o.ft=ePick(o,st.rb.filter(r=>dist(o.x,o.y,r.x,r.y)<420),o)}u.eai=(u.eai||0)-dt;if(u.eai<=0||!u.et||u.et.hp<=0||dist(o.x,o.y,u.et.x,u.et.y)>440){u.eai=.4;u.et=ePick(u,st.rb.filter(r=>dist(o.x,o.y,r.x,r.y)<420),o)}p=o.ft&&dist(u.x,u.y,o.ft.x,o.ft.y)<u.rng+140?o.ft:u.et}
+ if(p&&u.t!=='k'&&u.hp<u.mh*.25&&dist(u.x,u.y,o.x,o.y)>50){mv(u,o.x,o.y,dt,1);if(u.cd<=0&&dist(u.x,u.y,p.x,p.y)<=u.rng){hit(u,p,u.atk);u.cd=1/(u.as||1)}return}
  if(p){const d=dist(u.x,u.y,p.x,p.y);if(d>u.rng)mv(u,p.x,p.y,dt,1);else if(u.cd<=0){hit(u,p,u.atk);u.cd=1/(u.as||1)}}
  else mv(u,u.hx,u.hy,dt,1)}
 function update(dt){
@@ -1261,7 +1264,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261123-191614';
+const APPVER='20261123-194113';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
