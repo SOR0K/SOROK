@@ -360,6 +360,11 @@ canvas.bpv{width:92px!important;aspect-ratio:140/84;border-radius:6px}
 @keyframes tutp{0%,100%{box-shadow:0 0 0 2px #ffe28a,0 0 10px rgba(255,226,138,.6)}50%{box-shadow:0 0 0 4px #ffe28a,0 0 24px rgba(255,226,138,.9)}}
 #shopw .sp button:not(.no){border-color:#2fa860;box-shadow:inset 3px 0 0 #3ae07a}
 #shopw .sp button.no{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
+#simp{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:30;background:rgba(12,18,28,.94);border:1px solid #c9a255;border-radius:10px;padding:8px 12px;color:#e8eef7;font-size:13px;max-width:calc(100vw - 32px);box-shadow:0 6px 20px rgba(0,0,0,.5)}#simp b{color:#ffd76a}#simp .md{padding:1px 7px;border-radius:5px;background:#26354d}#simp .sp2{display:flex!important;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center;grid-template-columns:none!important}#simp button{display:inline-block!important;width:auto!important;flex:0 0 auto!important;margin:0!important;padding:3px 9px!important;font-size:12px!important;min-height:0!important;border-left-width:1px}#simp button.on{border-color:#ffd76a;color:#ffd76a}#simp .sbar{height:6px;background:#26354d;border-radius:3px;margin-top:6px;overflow:hidden}#simp .sbar i{display:block;height:100%;background:#ffd76a}
+.simr{border:1px solid #2b3640;border-radius:8px;padding:8px 10px;margin:8px 0;background:#10161c}.simr summary{cursor:pointer;font-size:14px}.simr h4{margin:12px 0 4px;font-size:13px;color:#e8c36a}
+.stl{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:8px}.stl div{background:#141b22;border:1px solid #232d37;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;gap:2px}.stl span{font-size:11px;color:#8a9bad}.stl b{font-size:15px}
+.slg{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:#aab6c2;margin-top:2px}.slg i{display:inline-block;width:10px;height:3px;margin-right:4px;vertical-align:middle}
+.stb{border-collapse:collapse;font-size:12px;width:100%;min-width:560px}.stb th,.stb td{border-bottom:1px solid #232d37;padding:4px 6px;text-align:right}.stb th{color:#8a9bad;font-weight:600}.stb td:first-child,.stb th:first-child{text-align:left}
 #sp_ctl{display:block!important;padding:10px 12px}#sp_ctl[hidden]{display:none!important}
 .cf{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;position:sticky;top:-10px;background:#131a21;padding:6px 0;z-index:2}
 #shopw #sp_ctl .cf button{min-height:0;flex-direction:row;align-items:center!important;padding:5px 11px;font-size:12.5px;box-shadow:none;border-color:#2b3640;gap:5px}
@@ -1079,6 +1084,91 @@ addEventListener('keyup',e=>delete keys[e.key.toLowerCase()]);
 let lastSim=performance.now();
 function simTo(now){let el=(now-lastSim)/1000;lastSim=now;if(!(el>0))return;el=Math.min(el,300);const n=Math.max(1,Math.ceil(el/(1/30))),h=el/n;for(let i=0;i<n;i++)for(let gi=0;gi<gs;gi++)update(h)}
 setInterval(()=>{if(document.hidden&&scene==='game')simTo(performance.now())},1000);
+
+/* ===== 시뮬레이터 모드 (관리자) ===== */
+const SIM={on:false,fast:false,max:4800,spd:8,follow:true};
+let B=null,mode='build',startP=0,scoutT=0,T0=null;
+const isArmy=u=>u.t==='c'||u.t==='r'||u.t==='h';
+const buy=t=>{if(st.ore<T[t].c)return false;st.ore-=T[t].c;SS().made++;SS().spRobot+=T[t].c;st.rb.push(mkP(t,B.x+rnd(-40,50),B.y+rnd(-50,40)));return true};
+const pP=u=>u.t==='h'?u.hp*4:patk(u)*(u.as||1)*u.hp;
+const eP=e=>e.atk*(e.as||1)*e.hp;
+function tgtOut(){return st.outs.filter(o=>!o.cap).sort((a,b)=>dist(a.x,a.y,B.x,B.y)-dist(b.x,b.y,B.x,B.y))[0]}
+function defP(o){return st.en.filter(e=>e.o===o).reduce((a,e)=>a+eP(e),0)+o.atk*3*1.6*o.hp*.5}
+function simBot(){B=st.B;const R=st.rb,cnt=t=>R.filter(u=>u.t===t).length,cap=st.outs.filter(o=>o.cap).length,raidOn=st.en.some(e=>e.raid);
+ const army=R.filter(isArmy);
+ // miners
+ if(cnt('m')<Math.min(15,7+cap)&&(cnt('m')<4||st.ore>=60))buy('m');
+ const MS=st.mines.filter(m=>m.amt>0&&seen(m.x,m.y)&&!st.outs.some(o=>!o.cap&&dist(o.x,o.y,m.x,m.y)<380)),load=m=>R.filter(q=>q.mine===m).length;
+ R.filter(u=>u.t==='m'&&(!u.mine||u.mine.amt<=0)).forEach(u=>{const ok=MS.filter(m=>!m.ev||u.lv>=6);if(!ok.length)return;ok.sort((a,b)=>(load(a)*500+dist(a.x,a.y,B.x,B.y)-(a.ev?600:0))-(load(b)*500+dist(b.x,b.y,B.x,B.y)-(b.ev?600:0)));u.mine=ok[0];u.st='go';u.c=0});
+ // scouts
+ T0=tgtOut();
+ const sc=R.filter(u=>u.t==='s');if(sc.length<1&&st.ore>=40&&st.t>=scoutT){buy('s');scoutT=st.t+45}
+ if(T0&&!seen(T0.x,T0.y)&&!(st.vbcd>0)&&st.ore>=60){st.ore-=60;SS().spItem+=60;st.vbcd=300;reveal(T0.x,T0.y,180);st.vbN=(st.vbN||0)+1}
+ sc.forEach(u=>{if(u.tx==null){if(false){}else{const a=Math.random()*Math.PI/2-Math.PI/2,r=rnd(400,700+st.t/2);u.tx=cl(B.x+Math.cos(a)*r,0,W);u.ty=cl(B.y+Math.sin(a)*r,0,W)}}});
+ // army build
+ const cap2=Math.min(40-(st.dead||[]).length,14+2*cap);if(army.length<cap2&&st.ore>=70){const c=cnt('c'),r=cnt('r'),h=cnt('h');buy(h*3<c+r?'h':c<2*r?'c':'r')}
+ // upgrades
+ const core=new Set([...R.filter(u=>u.t==='c').sort((a,b)=>a.id-b.id).slice(0,10),...R.filter(u=>u.t==='r').sort((a,b)=>a.id-b.id).slice(0,10),...R.filter(u=>u.t==='h').sort((a,b)=>a.id-b.id).slice(0,2)]);
+ for(let k=0;k<3&&st.ore>150;k++){const L=army.filter(u=>u.lv<11).sort((a,b)=>(core.has(b)?100:0)+b.lv-((core.has(a)?100:0)+a.lv))[0];if(!L||!lvup(L))break}
+ if(st.ore>120&&st.mines.some(m=>m.ev&&seen(m.x,m.y))){const m=R.filter(u=>u.t==='m'&&u.lv<6).sort((a,b)=>b.lv-a.lv)[0];if(m)lvup(m)}
+ if(st.ore>400){const m=R.filter(u=>u.t==='m'&&u.lv<11)[0];if(m)lvup(m)}
+ // evolve
+ const ev=R.filter(u=>u.lv>=11&&u.ev<3&&isArmy(u)&&(core.has(u)||st.stone>200)).sort((a,b)=>(a.t==='r'?0:a.t==='c'?1:2)-(b.t==='r'?0:b.t==='c'?1:2))[0];if(ev&&st.stone>=EV[ev.ev]){st.stone-=EV[ev.ev];SS().stUsed+=EV[ev.ev];ev.ev++;calc(ev)}
+ // control
+ const P=army.reduce((a,u)=>a+pP(u),0);
+ if(raidOn){mode='defend';army.forEach(u=>{if(dist(u.x,u.y,B.x,B.y)>250){u.tx=B.x+rnd(-60,60);u.ty=B.y+rnd(-60,60);u.tgt=null}});return}
+ if(mode==='defend'){mode='build';army.forEach(u=>{u.tx=B.x+rnd(-60,60);u.ty=B.y+rnd(-60,60)})}
+ if(!T0)return;
+ if(mode==='build'){const home=army.filter(u=>dist(u.x,u.y,B.x,B.y)<400).length;if(seen(T0.x,T0.y)&&home>=army.length*.8&&P>1.1*defP(T0)&&army.length>=4){mode='attack';startP=P}}
+ if(mode==='attack'){if(T0.cap||P<.35*startP||army.length<3){mode='build';army.forEach(u=>{u.tgt=null;u.tx=B.x+rnd(-60,60);u.ty=B.y+rnd(-60,60)});return}
+  const cx=army.reduce((a,u)=>a+u.x,0)/army.length,cy=army.reduce((a,u)=>a+u.y,0)/army.length;
+  army.forEach(u=>{if(u.t==='h'){u.tx=cx;u.ty=cy;return}if(!u.tgt||u.tgt.hp<=0){const d=st.en.filter(e=>e.o===T0&&seen(e.x,e.y)).sort((a,b)=>dist(u.x,u.y,a.x,a.y)-dist(u.x,u.y,b.x,b.y))[0];u.tgt=d&&dist(u.x,u.y,d.x,d.y)<500?d:T0;u.tx=null}})}
+}
+
+{const _u=update;update=function(dt){_u(dt);if(SIM.on&&scene==='game')simTick(dt)}}
+{const _s=simTo;simTo=function(n){if(SIM.fast){lastSim=n;return}_s(n)}}
+{const _g=saveGame;saveGame=function(){if(SIM.on)return;return _g()}}
+{const _f=sfx,_fa=sfxAt;sfx=function(k){if(SIM.on)return;return _f(k)};sfxAt=function(k,x,y){if(SIM.on)return;return _fa(k,x,y)}}
+const simLoad=()=>{try{return JSON.parse(localStorage.getItem('sorok_sim')||'[]')}catch(e){return[]}};
+function simRec(){const A=st.rb.filter(isArmy),R=st.en.filter(e=>e.raid);SIM.rec.push({m:+(st.t/60).toFixed(1),n:A.length,lv:A.length?+(A.reduce((a,u)=>a+u.lv,0)/A.length).toFixed(1):0,mx:A.length?Math.max(...A.map(u=>u.lv)):0,ev:A.filter(u=>u.ev).length,ev3:A.filter(u=>u.ev===3).length,sto:st.stone|0,cap:st.outs.filter(o=>o.cap).length,bhp:Math.max(0,Math.round(st.B.hp)),ore:Math.round(SS().earn),rl:R.length?Math.max(...R.map(e=>e.lv)):null,mn:st.rb.filter(u=>u.t==='m').length,dead:(st.dead||[]).length})}
+function simStart(fast){SIM.on=true;SIM.fast=!!fast;SIM.rec=[];SIM.acc=0;SIM.racc=0;SIM.rs=0;SIM.pr=false;SIM.first=null;SIM.real=performance.now();
+ diff='h';reset();scene='game';$('lobby').hidden=true;st.tut=-1;if($('tut'))$('tut').hidden=true;B=st.B;mode='build';startP=0;scoutT=0;gs=fast?1:SIM.spd;simRec();simPanel(true);
+ if(fast)simFast()}
+function simFast(){if(!SIM.on||!SIM.fast)return;const t0=performance.now();while(SIM.on&&performance.now()-t0<30)update(.1);if(SIM.on){simPanel();setTimeout(simFast,0)}}
+function simTick(dt){SIM.acc+=dt;SIM.racc+=dt;if(SIM.acc>=1){SIM.acc=0;try{simBot()}catch(e){}}
+ const ra=st.en.some(e=>e.raid);if(ra&&!SIM.pr)SIM.rs++;SIM.pr=ra;if(SIM.first==null&&st.outs.some(o=>o.cap))SIM.first=st.t;
+ if(SIM.racc>=60){SIM.racc=0;simRec()}
+ if(st.lost||st.won||st.t>=SIM.max)simEnd()}
+function simEnd(stop){if(!SIM.on)return;simRec();const S=SS(),r={d:new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),res:st.won?'승리':st.lost?'패배':stop?'중단':'생존',t:Math.round(st.t),cap:st.outs.filter(o=>o.cap).length,rs:SIM.rs,rw:st.raidWins||0,made:S.made,lost:S.lost,kills:S.kills,earn:Math.round(S.earn),stE:S.stEarn|0,first:SIM.first==null?null:Math.round(SIM.first),fast:SIM.fast,rec:SIM.rec};
+ const L=simLoad();L.unshift(r);try{localStorage.setItem('sorok_sim',JSON.stringify(L.slice(0,8)))}catch(e){}
+ SIM.on=false;SIM.fast=false;gs=1;simPanel(false);reset();lobby('lset');setTimeout(()=>{const e=$('simres');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},60)}
+function simPanel(show){let p=$('simp');if(show===false){if(p)p.remove();return}
+ if(!p){p=document.createElement('div');p.id='simp';document.body.appendChild(p);p.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;if(d.ss){SIM.spd=+d.ss;gs=SIM.spd}if(d.sf)SIM.follow=!SIM.follow;if(d.sx)simEnd(true);simPanel()})}
+ const A=st.rb.filter(isArmy),T=st.t|0,pct=Math.min(100,Math.round(100*st.t/SIM.max)),mm={build:'준비 중',attack:'공격 중',defend:'방어 중'};
+ p.innerHTML=`<div class="sp1">🤖 <b>시뮬레이터</b> <span class="md">${mm[mode]||''}</span> ⏱ <b>${T/60|0}:${String(T%60).padStart(2,'0')}</b> / ${SIM.max/60}분 · 전투 로봇 <b>${A.length}</b> · 평균 Lv <b>${A.length?(A.reduce((a,u)=>a+u.lv,0)/A.length).toFixed(1):'-'}</b> · 진화 <b>${A.filter(u=>u.ev).length}</b> · 정복 <b>${st.outs.filter(o=>o.cap).length}</b></div>`+
+ (SIM.fast?`<div class="sbar"><i style="width:${pct}%"></i></div><div class="sp2"><span>빠른 시뮬 진행 중 ${pct}%</span><button data-sx="1">중단하고 결과 보기</button></div>`:
+ `<div class="sp2">${[1,4,8,16].map(v=>`<button data-ss="${v}" class="${v===SIM.spd?'on':''}">×${v}</button>`).join('')}<button data-sf="1" class="${SIM.follow?'on':''}">카메라 따라가기</button><button data-sx="1">중단하고 결과 보기</button></div>`)}
+setInterval(()=>{if(!SIM.on)return;if(!SIM.fast)simPanel();if(SIM.follow&&!SIM.fast&&st){const A=st.rb.filter(isArmy);if(A.length){const cx=A.reduce((a,u)=>a+u.x,0)/A.length,cy=A.reduce((a,u)=>a+u.y,0)/A.length;cam.x+=(cl(cx-VW/2,0,W-VW)-cam.x)*.25;cam.y+=(cl(cy-VH/2,0,W-VH)-cam.y)*.25}}},250);
+function simSvg(rec,series,ymax,unit){const W2=560,H2=190,L=34,Rr=10,Tp=10,Bt=26,mx=Math.max(1,rec[rec.length-1].m),X=m=>L+(W2-L-Rr)*m/mx,Y=v=>Tp+(H2-Tp-Bt)*(1-v/ymax);
+ let g='';for(let k=0;k<=4;k++){const v=ymax*k/4,y=Y(v);g+=`<line x1="${L}" x2="${W2-Rr}" y1="${y}" y2="${y}" stroke="#2b3640"/><text x="${L-5}" y="${y+4}" text-anchor="end" font-size="10" fill="#8a9bad">${Math.round(v)}</text>`}
+ const st2=Math.max(10,Math.ceil(mx/8/10)*10);for(let m=0;m<=mx;m+=st2)g+=`<text x="${X(m)}" y="${H2-8}" text-anchor="middle" font-size="10" fill="#8a9bad">${m}분</text>`;
+ series.forEach(([k,c,dots])=>{if(dots){rec.forEach(r=>{if(r[k]!=null)g+=`<circle cx="${X(r.m)}" cy="${Y(r[k])}" r="3" fill="${c}"/>`})}else g+=`<polyline fill="none" stroke="${c}" stroke-width="2.2" points="${rec.map(r=>X(r.m)+','+Y(r[k]||0)).join(' ')}"/>`});
+ return `<svg viewBox="0 0 ${W2} ${H2}" style="width:100%;max-width:${W2}px;display:block">${g}</svg><div class="slg">${series.map(([k,c,d,n])=>`<span><i style="background:${c}"></i>${n}</span>`).join('')}</div>`}
+function simHtml(){const L=simLoad();if(!L.length)return '<p class="cd">아직 시뮬 결과가 없어요. 위 버튼으로 시뮬을 돌려 보세요.</p>';
+ return L.map((r,i)=>{const fm=s=>(s/60|0)+'분 '+String(s%60).padStart(2,'0')+'초',rec=r.rec||[],ten=rec.filter((q,j)=>j===rec.length-1||Math.round(q.m)%10===0&&Math.abs(q.m-Math.round(q.m))<.05);
+  const col=r.res==='패배'?'#ff8a7a':r.res==='승리'?'#ffd76a':'#7fe0a0';
+  return `<details class="simr" ${i===0?'open':''}><summary><b style="color:${col}">${r.res}</b> · ${fm(r.t)} · 정복 ${r.cap}/50 · <span class="cd">${r.d}${r.fast?' · 빠른 시뮬':''}</span></summary>
+  <div class="stl"><div><span>결과</span><b style="color:${col}">${r.res}</b></div><div><span>버틴 시간</span><b>${fm(r.t)}</b></div><div><span>정복한 기지</span><b>${r.cap} / 50</b></div><div><span>첫 정복</span><b>${r.first==null?'없음':fm(r.first)}</b></div><div><span>레이드 방어</span><b>${r.rw} / ${r.rs}</b></div><div><span>만든 로봇</span><b>${r.made}</b></div><div><span>죽은 로봇</span><b>${r.lost}</b></div><div><span>잡은 적</span><b>${r.kills}</b></div><div><span>번 광석</span><b>${r.earn.toLocaleString()}</b></div><div><span>모은 진화석</span><b>${r.stE}</b></div></div>
+  <h4>레벨 변화</h4>${rec.length>1?simSvg(rec,[['lv','#ffd76a',0,'우리 전투 로봇 평균 Lv'],['mx','#7fd8ff',0,'우리 최고 Lv'],['rl','#ff6a5a',1,'레이드 Lv (나타났을 때)']],11):''}
+  <h4>군대·정복 변화</h4>${rec.length>1?simSvg(rec,[['n','#7fe0a0',0,'전투 로봇 수'],['ev','#c79bff',0,'진화한 로봇'],['cap','#ffd76a',0,'정복한 기지']],40):''}
+  <h4>10분마다 기록</h4><div style="overflow-x:auto"><table class="stb"><tr><th>시간</th><th>전투 로봇</th><th>평균 Lv</th><th>최고 Lv</th><th>진화 (3단계)</th><th>진화석</th><th>정복</th><th>기지 체력</th><th>번 광석</th></tr>${ten.map(q=>`<tr><td>${Math.round(q.m)}분</td><td>${q.n}${q.dead?' (+'+q.dead+')':''}</td><td>${q.lv}</td><td>${q.mx}</td><td>${q.ev} (${q.ev3})</td><td>${q.sto}</td><td>${q.cap}</td><td>${q.bhp}</td><td>${q.ore.toLocaleString()}</td></tr>`).join('')}</table></div></details>`}).join('')+'<div class="row2"><button data-sim="clr">시뮬 기록 지우기</button></div>'}
+function simAdm(){return `<h3 id="simres" style="margin-top:18px">🤖 시뮬레이터 모드</h3><p class="cd">봇이 게임을 자동으로 플레이해요. 끝나면 결과가 아래에 표와 그래프로 나와요. 시뮬 중에는 저장·청석·배틀패스가 바뀌지 않아요.</p>
+ <div class="row2"><label class="cd" style="display:flex;align-items:center;gap:6px">시뮬 길이 <select id="simmax" style="background:#10151a;color:var(--ink);border:1px solid #33414d;padding:6px">${[30,45,60,80,100,120].map(m=>`<option value="${m}" ${SIM.max===m*60?'selected':''}>${m}분</option>`).join('')}</select></label></div>
+ <div class="row2"><button data-sim="watch">관전 시뮬 시작 (배속으로 지켜보기)</button><button data-sim="fast">빠른 시뮬 (결과만 바로)</button></div><div id="simlist">${simHtml()}</div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-sim]');if(!b||!adminOn)return;const k=b.dataset.sim,sm=$('simmax');if(sm)SIM.max=+sm.value*60;
+ if(k==='watch')simStart(false);else if(k==='fast')simStart(true);else if(k==='clr'){try{localStorage.removeItem('sorok_sim')}catch(e){}renderAdm()}});
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='simmax')SIM.max=+e.target.value*60});
+
 function loop(t){last=t;simTo(performance.now());draw();hud();$('ssv').textContent=SV.ss||0;if(!$('lobby').hidden&&!$('lmain').hidden){prevHome($('homepv'),t/1000);if(PRO.length){if(t-promoT>5500){promoT=t;promoI=(promoI+1)%PRO.length;renderPromo()}const pc=$('promopv');if(pc)PRO[promoI].dr(pc,t/1000)}}if(!$('lshop').hidden||!$('lpass').hidden||!$('lstore').hidden)document.querySelectorAll('.pv').forEach(c=>c.dataset.mset!==undefined?prevS(c,MSET[+c.dataset.mset],t/1000):c.dataset.set!==undefined?prevS(c,SETS[+c.dataset.set],t/1000):c.dataset.t!==undefined?prevT(c,TS.find(q=>q.id===c.dataset.t)||null,t/1000):c.dataset.b!==undefined?prevB(c,BS.find(q=>q.id===c.dataset.b)||null,t/1000):prev(c,SK.find(q=>q.id===c.dataset.s)||null,t/1000));requestAnimationFrame(loop)}
 const hasSave=()=>{try{return !!localStorage.getItem('sorok_save')}catch(e){return false}};
 function saveGame(){try{const S={...st,diff,cam,ex:Array.from(ex).join(''),outs:st.outs.map(o=>({...o,tt:null})),rb:st.rb.map(u=>({...u,mine:u.mine?st.mines.indexOf(u.mine):-1,tgt:null})),en:st.en.map(u=>({...u,ag:null,o:st.outs.indexOf(u.o)})),pr:[],pt:[],fx:[]};localStorage.setItem('sorok_save',JSON.stringify(S))}catch(e){}}
@@ -1087,7 +1177,7 @@ addEventListener('pagehide',()=>{if(scene==='game')saveGame()});document.addEven
 function lobby(sec,m){scene='lobby';if($('tut'))$('tut').hidden=true;$('lobby').classList.toggle('shopmode',sec==='lshop'||sec==='lpass'||sec==='lstore');paused=false;$('pausew').hidden=true;$('bcont').hidden=!hasSave();$('lobby').hidden=false;['lmain','lplay','lset','lshop','lpass','lstore'].forEach(i=>$(i).hidden=i!==sec);$('csv').textContent=SV.cs;if(m!==undefined)$('lmsg').textContent=m;renderDiff();renderAdm();if(sec==='lshop')renderShop();if(sec==='lstore')renderStore();if(sec==='lset')volUI();if(sec==='lmain')renderMain();if(sec==='lpass'){const t=$('bptrack');if(t)t.remove();renderPass()}}
 function csG(){return Math.floor(SS().earn*.03)+st.outs.filter(o=>o.cap).reduce((a,o)=>a+10*(Math.min(6,Math.floor(o.dn*7))+1),0)}
 function endGame(){const t0=st.t,ok=t0>=600||st.won,g=ok?csG():0;SV.cs+=g;const bx=bpGain();save();try{localStorage.removeItem('sorok_save')}catch(e){}qa=0;reset();lobby('lmain','[배틀패스 +'+bx+' XP] '+(ok?'게임 종료! 청석 '+g+'개를 받았어요 (번 광석의 3% + 정복 보너스)':'10분 이상 플레이해야 청석을 받아요. 이번 판은 '+Math.floor(t0/60)+'분이라 청석이 없어요'))}
-function renderAdm(){$('adm').innerHTML=adminOn?'<p class="cd">관리자 모드가 켜져 있어요. 게임 중 아래 부대 창에 관리자 버튼이 나와요.</p><div class="row2"><button data-l="ac">청석 +1000</button><button data-l="axp">패스 XP +1000</button><button data-l="ass">별석 +100</button><button data-l="alock">관리자 모드 끄기</button></div><div class="row2"><button data-l="cashtg">현질 상점: '+(SV.cashOn===false?'OFF':'ON')+'</button></div>':'<div class="row2"><input id="apw" type="password" placeholder="비밀번호" autocomplete="off" style="flex:1;min-width:0;background:#10151a;border:1px solid #33414d;color:var(--ink);padding:10px;font-size:14px"><button data-l="admin">열기</button></div>'}
+function renderAdm(){$('adm').innerHTML=adminOn?'<p class="cd">관리자 모드가 켜져 있어요. 게임 중 아래 부대 창에 관리자 버튼이 나와요.</p><div class="row2"><button data-l="ac">청석 +1000</button><button data-l="axp">패스 XP +1000</button><button data-l="ass">별석 +100</button><button data-l="alock">관리자 모드 끄기</button></div><div class="row2"><button data-l="cashtg">현질 상점: '+(SV.cashOn===false?'OFF':'ON')+'</button></div>'+simAdm():'<div class="row2"><input id="apw" type="password" placeholder="비밀번호" autocomplete="off" style="flex:1;min-width:0;background:#10151a;border:1px solid #33414d;color:var(--ink);padding:10px;font-size:14px"><button data-l="admin">열기</button></div>'}
 function renderDiff(){['dplay','dset'].forEach(id=>$(id).innerHTML=Object.keys(DF).map(k=>`<button data-d="${k}" class="dc${k===diff?' on':''}"><b>${DF[k].nm}</b><span>${DF[k].ds}</span></button>`).join(''))}
 const ST_SK=()=>SK.filter(q=>q.g==='star');
 const MSET=[{n:'천상 세트',r:'m1',b:'mb1',t:'tm1'},{n:'용왕 세트',r:'m2',b:'mb2',t:'tm2'},{n:'프리즘 세트',r:'m3',b:'mb3',t:'tm3'}];
@@ -1264,7 +1354,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261123-194113';
+const APPVER='20261123-194734';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
