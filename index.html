@@ -787,6 +787,7 @@ function bgPreview(id){try{const a=au();if(a&&a.state!=='running')a.resume()}cat
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tprev]');if(!b)return;e.stopPropagation();bgPreview(b.dataset.tprev)},true);
 const PN=[['11월 23일 저녁 업데이트',[
  ['⚔ 전투',['기지 공격 명령을 내리면 로봇들이 기지 앞(포탑 사거리 밖)에 공격 대형으로 모였다가 한꺼번에 돌격해요 (근접 앞 · 원거리 가운데 · 지원 뒤)','지원 로봇은 공격 명령 때 적 기지로 뛰어들지 않고 아군 뒤를 따라가요','여러 로봇에게 이동 명령을 내리면 가장 느린 로봇 속도에 맞춰 같이 움직여요 (진화한 지원 로봇이 혼자 앞서가지 않아요)']],
+ ['⛏ 채굴 로봇',['광산이 바닥나면 들고 있던 광석을 기지에 팔고 기지 옆에서 기다려요 (광산 앞에 멍하니 서 있지 않아요)']],
  ['💚 지원 로봇',['지원 로봇이 다친 아군을 찾아가 치료 사거리 안으로 들어가요 (너무 뒤에 머물지 않아요)','치료 사거리 끝자락에 서서 적과 거리를 두고, 아군 체력이 35% 아래면 더 붙어서 살려요','자기 체력이 60% 아래로 떨어지거나 적이 바로 붙으면 뒤로 빠져요']],
  ['🔭 시야 폭탄 · 드론 · 깃발',['시야 폭탄 재사용 대기가 후반으로 갈수록 짧아져요: 20분까지 5분 → 40분 4분 → 60분 3분 → 80분부터 2분','정찰 드론 재사용 대기도 짧아져요: 20분까지 8초 → 50분 5.5초 → 80분부터 3초','단축키: 1 정찰 · 2 채굴 · 3 근접 · 4 원거리 · 5 지원 (종류별 전체 선택) · 6 또는 스페이스 = 기름 들기','T 키: 마우스 위치에 번호 깃발을 꽂아요 (지도·미니맵에 표시, 최대 20개, 같은 곳에서 다시 T를 누르면 뽑혀요)']],
  ['🎵 테마 배경음',['테마마다 배경음이 달라져요 (차가운 종소리 · 경쾌한 · 묵직한 · 전자음 4가지 분위기)','크로 테마는 반짝이는 소리가 한 겹 더 들어가요','★ 걸작 테마 3종은 웅장한 전용 테마곡 (천상 · 화산 · 프리즘 각각 다르게)','걸작 세트를 완성하면 레이드 때 전용 편곡이 나와요','상점 테마 카드에 🎵 미리듣기 버튼 (15초)','설정 → 배경음에서 가진 테마 곡을 골라 들을 수 있어요']],
@@ -912,10 +913,10 @@ function ctrl(u,dt){
  u.cd-=dt;well(u,dt);if(u.sq)sqTick(u);else if(u.spc&&u.tx==null)u.spc=0;if(u.oilT>0)u.oilT-=dt;
  if(u.t==='s'){const ox=u.x,oy=u.y;if(u.tx!=null&&mv(u,u.tx,u.ty,dt,1)<=2)u.tx=null;u.f-=dist(ox,oy,u.x,u.y);reveal(u.x,u.y,vis(u));if(u.f<=0){u.hp=0;msg('정찰 로봇의 연료가 떨어져 고장났어요')}return}
  if(u.t==='m'){if(u.mine){const m=u.mine,B=st.B;
-   if(m.amt<=0&&u.st!=='back'){u.mine=null;msg('광산이 바닥났어요. 다른 광산을 지정해 주세요')}
+   if(m.amt<=0&&u.st!=='back'){if(u.c>0)u.st='back';else{u.mine=null;u.tx=B.x+rnd(-80,80);u.ty=B.y+rnd(-80,80);if(!st.mdm||st.t-st.mdm>6){st.mdm=st.t;msg('⛏ 광산이 바닥나서 채굴 로봇이 기지로 돌아와요. 다른 광산을 지정해 주세요')}}}
    else if(u.st==='go'){if(mv(u,m.x,m.y,dt,1)<=2){u.st='dig';u.w=3}}
    else if(u.st==='dig'){u.w-=dt;if(u.w<=0){const c=Math.min(m.ev?Math.max(1,Math.round(carry(u)/5)):carry(u),m.amt);m.amt-=c;u.c=c;u.st='back'}}
-   else if(mv(u,B.x,B.y,dt,1)<=2){if(u.mine&&u.mine.ev){st.stone+=u.c;u.ms=(u.ms||0)+u.c;SS().stEarn+=u.c}else{const g=u.c*eco();st.ore+=g;u.mo=(u.mo||0)+g;sfxAt('ore',u.x,u.y);SS().earn+=g;st.log.push([st.t,g])}u.c=0;u.st='go'}}
+   else if(mv(u,B.x,B.y,dt,1)<=2){if(u.mine&&u.mine.ev){st.stone+=u.c;u.ms=(u.ms||0)+u.c;SS().stEarn+=u.c}else{const g=u.c*eco();st.ore+=g;u.mo=(u.mo||0)+g;sfxAt('ore',u.x,u.y);SS().earn+=g;st.log.push([st.t,g])}u.c=0;u.st='go';if(u.mine&&u.mine.amt<=0){u.mine=null;u.tx=B.x+rnd(-80,80);u.ty=B.y+rnd(-80,80);if(!st.mdm||st.t-st.mdm>6){st.mdm=st.t;msg('⛏ 광산이 바닥나서 채굴 로봇이 기지에 대기해요. 다른 광산을 지정해 주세요')}}}}
   else if(u.tx!=null&&mv(u,u.tx,u.ty,dt,1)<=2)u.tx=null;return}
  if(u.t==='c'||u.t==='r'){if(smartAI(u,dt))return}
  if(u.tgt&&(u.tgt.hp<=0||u.tgt.cap))u.tgt=null;
@@ -1448,7 +1449,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261124-012556';
+const APPVER='20261124-013549';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
