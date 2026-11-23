@@ -872,9 +872,9 @@ function ectrl(u,dt){const o=u.o;u.cd-=dt;
  if(p){const d=dist(u.x,u.y,p.x,p.y);if(d>u.rng)mv(u,p.x,p.y,dt,1);else if(u.cd<=0){hit(u,p,u.atk);u.cd=1/(u.as||1)}}
  else mv(u,u.hx,u.hy,dt,1)}
 function update(dt){
- if(scene!=='game'||st.won||st.lost||paused)return;st.t+=dt;if((st.as=(st.as||0)+dt)>15){st.as=0;saveGame()}{const g=inc()*dt;st.ore+=g;SS().earn+=g}
+ if(scene!=='game'||st.won||st.lost||paused)return;if(!st.frz){st.t+=dt;if((st.as=(st.as||0)+dt)>15){st.as=0;saveGame()}{const g=inc()*dt;st.ore+=g;SS().earn+=g}}
  const sp=900*dt/gs;if(mp&&!dn&&!bx&&!mmd&&!inMM(mp)){const es=1500*dt/gs;if(mp.sx<26)cam.x-=es;else if(mp.sx>VW-26)cam.x+=es;if(mp.sy<26)cam.y-=es;else if(mp.sy>VH-26)cam.y+=es}if(keys.a||keys.arrowleft)cam.x-=sp;if(keys.d||keys.arrowright)cam.x+=sp;if(keys.w||keys.arrowup)cam.y-=sp;if(keys.s||keys.arrowdown)cam.y+=sp;
- cam.x=cl(cam.x,0,W-VW);cam.y=cl(cam.y,0,W-VH);
+ cam.x=cl(cam.x,0,W-VW);cam.y=cl(cam.y,0,W-VH);if(st.frz)return;
  st.outs.forEach(o=>{if(o.cap)return;o.warn=!!near(o,st.rb,330);if(near(o,st.rb,240))o.al=6;else o.al-=dt;o.cd-=dt;
  if(o.tt&&(o.tt.hp<=0||dist(o.x,o.y,o.tt.x,o.tt.y)>200)){o.tt=null;o.stk=0}
  if(!o.tt){o.tt=near(o,st.rb,200);o.stk=0}
@@ -943,7 +943,7 @@ function draw(){
  x.restore();amb(x,TH,performance.now()/1000,VW,VH,cam.x,cam.y);
  const vg=x.createRadialGradient(VW/2,VH/2,VH*.45,VW/2,VH/2,VW*.62);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.35)');x.fillStyle=vg;x.fillRect(0,0,VW,VH);
  {const rl=st.en.filter(e=>e.raid).length,tl=(st.nr||1e9)-st.t;if(scene==='game'&&(rl||tl<=30&&tl>0)){const tx=rl?'🚨 레이드 진행 중 · 남은 적 '+rl:'⚠ 레이드까지 '+Math.ceil(tl)+'초';x.font='bold 19px sans-serif';const w=x.measureText(tx).width+40,by=VH-196;x.fillStyle='rgba(70,8,8,.92)';x.fillRect(VW/2-w/2,by,w,38);x.lineWidth=2;x.strokeStyle='#ff5a4a';x.strokeRect(VW/2-w/2,by,w,38);x.lineWidth=1;x.fillStyle='#ffe0dc';x.textAlign='center';x.fillText(tx,VW/2,by+26)}}
- if(scene==='game'&&(gs>1||st.god)){x.fillStyle='#ffd27a';x.font='bold 13px sans-serif';x.textAlign='left';x.fillText((gs>1?'속도 ×'+gs+'  ':'')+(st.god?'무적':''),12,24)}
+ if(scene==='game'&&(gs>1||st.god||st.frz)){x.fillStyle='#ffd27a';x.font='bold 13px sans-serif';x.textAlign='left';x.fillText((st.frz?'⏸ 정지 중  ':'')+(gs>1?'속도 ×'+gs+'  ':'')+(st.god?'무적':''),12,24)}
  if(mp){const hv=near({x:mp.sx+cam.x,y:mp.sy+cam.y},[...st.rb,...st.en.filter(e=>vis2(e.x,e.y))],20);if(hv){const L=(hv.team?einfo(hv):info(hv)).split('\n'),w2=230,h2=L.length*16+10;let tx=hv.x-cam.x+16,ty=hv.y-cam.y-h2-8;if(tx+w2>VW)tx-=w2+32;if(ty<4)ty=hv.y-cam.y+16;
   x.fillStyle='rgba(10,14,18,.93)';x.fillRect(tx,ty,w2,h2);x.strokeStyle=hv.ev?'#b080ff':'#33414d';x.strokeRect(tx,ty,w2,h2);x.fillStyle='#dfe6ea';x.font='12px sans-serif';x.textAlign='left';L.forEach((l,i)=>x.fillText(l,tx+8,ty+17+i*16))}}
  if(mp&&st.hold==='oil'){const X=mp.sx+14,Y=mp.sy+10;x.fillStyle='#0b1118';x.fillRect(X-7,Y-8,14,16);x.fillStyle=SKIN?SKIN.c:'#d9a441';x.fillRect(X-6,Y-7,12,14);x.fillStyle='#2a1a08';x.fillRect(X-3,Y-11,6,4);x.fillStyle=SKIN?SKIN.a:'#ffd27a';x.fillRect(X-4,Y-3,3,6);x.strokeStyle=SKIN?SKIN.a:'rgba(255,176,58,.8)';x.setLineDash([5,4]);x.beginPath();x.arc(mp.sx,mp.sy,70,0,7);x.stroke();x.setLineDash([]);x.fillStyle='rgba(255,176,58,.08)';x.beginPath();x.arc(mp.sx,mp.sy,70,0,7);x.fill()}
@@ -961,13 +961,13 @@ function draw(){
  if(st.won){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(0,0,VW,VH);x.fillStyle='#e6edf3';x.textAlign='center';x.font='bold 34px sans-serif';x.fillText('모든 외계 기지를 정복했어요!',VW/2,250);
   x.font='18px sans-serif';x.fillText(Math.round(st.t/60*10)/10+'분 · 화면을 누르면 로비로 (청석 +'+csG()+')',VW/2,290)}
 }
-const bts=[...Object.keys(T).map(k=>['b',k]),['i','drone'],['i','vbomb'],['i','oilb'],['i','oilh'],...['sel','evo','sell','c','r','h','m','s'].map(k=>['u',k]),['x','rev'],['x','all'],['x','home'],['x','shop'],['x','cam'],['x','save'],['x','quit'],['x','aore'],['x','astone'],['x','amap'],['x','amax'],['x','aheal'],['x','atime'],['x','ar0'],['x','ar1'],['x','ar2'],['x','ar3'],['x','ar4'],['x','agod'],['x','aspd'],['x','akill'],['x','aevo'],['x','araid']];
+const bts=[...Object.keys(T).map(k=>['b',k]),['i','drone'],['i','vbomb'],['i','oilb'],['i','oilh'],...['sel','evo','sell','c','r','h','m','s'].map(k=>['u',k]),['x','rev'],['x','all'],['x','home'],['x','shop'],['x','cam'],['x','save'],['x','quit'],['x','aore'],['x','astone'],['x','amap'],['x','amax'],['x','aheal'],['x','atime'],['x','ar0'],['x','ar1'],['x','ar2'],['x','ar3'],['x','ar4'],['x','agod'],['x','aspd'],['x','akill'],['x','aevo'],['x','aev1'],['x','afrz'],['x','araid']];
 bts.forEach(([a,k])=>{const b=document.createElement('button');b.dataset[a]=k;b.id=a+k;b.innerHTML='<span></span><small></small>';b.style.setProperty('--c',a==='b'?T[k].col:a==='u'?(T[k]?T[k].col:'#b080ff'):'#8a9bad');$(a==='b'||a==='i'?'p1':a==='u'?'p3':'p2').appendChild(b)});
 $('cnt').innerHTML=Object.keys(T).map(k=>`<div><i class="d" style="background:${T[k].col}"></i>${T[k].n}<b id="n${k}">0</b></div>`).join('');
 (function(){const tb={prod:$('sp_prod'),item:$('sp_item'),up:$('sp_up'),adm:$('sp_adm')};
  Object.keys(T).forEach(k=>tb.prod.appendChild($('b'+k)));tb.prod.appendChild($('xrev'));['drone','vbomb','oilb','oilh'].forEach(k=>tb.item.appendChild($('i'+k)));
  ['sel','evo','sell','c','r','h','m','s'].forEach(k=>tb.up.appendChild($('u'+k)));
- ['aore','astone','amap','amax','aheal','atime','ar0','ar1','ar2','ar3','ar4','agod','aspd','akill','aevo','araid'].forEach(k=>tb.adm.appendChild($('x'+k)));
+ ['aore','astone','amap','amax','aheal','atime','ar0','ar1','ar2','ar3','ar4','agod','aspd','akill','aevo','aev1','afrz','araid'].forEach(k=>tb.adm.appendChild($('x'+k)));
  $('p1').remove();
  const DESC={xrev:'전투 로봇(근접·원거리·지원)은 죽어도 레벨·진화 그대로 기지에서 부활해요. 대기 시간 10초 + 레벨당 5초 + 진화 단계당 15초, 레이드 중에 죽으면 1.5배. 이 버튼은 가장 강한 대기 로봇을 광석으로 바로 부활시켜요 (레벨×15 + 진화×30). 전투 로봇은 부활 대기 포함 최대 40대, 채굴 15대, 정찰 3대.',bs:'정찰 로봇 · 체력 20 · 이속 150 · 어둠을 밝혀요. 연료가 다 떨어지면 고장나요.',bm:'채굴 로봇 · 체력 30 · 광산을 누르면 자동으로 캐서 날라요. 진화 광산은 6레벨부터.',bc:'근접 로봇 · 체력 70 · 공격력 7 · 앞에서 버티는 탱커예요.',br:'원거리 로봇 · 체력 40 · 공격력 8 · 사거리 150.',bh:'지원 로봇 · 체력 45 · 주변 아군을 치료해요.',ivbomb:'시야 폭탄 · 던진 곳 주변(반경 180)을 영구적으로 밝혀요. 밝혀진 곳은 로봇도 보낼 수 있어요. 재사용 대기 5분.',idrone:'정찰 드론 · 지도 아무 곳에 던져 4초 동안 시야를 확보해요. 그곳으로 로봇은 보낼 수 없어요. 재사용 대기 8초.',ioilb:'기름 · 사서 보관해 두었다가 기름 들기로 사용해요.',ioilh:'기름 들기 · 원(반경 70) 안의 우리 로봇 모두 20초 동안 이속·공속 +20%.',usel:'선택한 로봇을 레벨업해요. 최대 11레벨.',usell:'선택한 로봇을 판매해요. 구매가의 60% + 업그레이드에 쓴 광석의 30%, 진화에 쓴 진화석의 50%를 돌려받아요. 실수 방지를 위해 두 번 눌러야 해요.',uevo:'선택한 11레벨 로봇을 진화시켜요. 진화석 11 → 22 → 33.',uc:'근접 로봇 전체를 한 번에 레벨업해요.',ur:'원거리 로봇 전체를 한 번에 레벨업해요.',uh:'지원 로봇 전체를 한 번에 레벨업해요.',um:'채굴 로봇 전체를 한 번에 레벨업해요.',us:'정찰 로봇 전체를 한 번에 레벨업해요.'};
  $('shopw').addEventListener('mouseover',e=>{const b=e.target.closest('button');if(b&&DESC[b.id])$('swinfo').textContent=DESC[b.id]});
@@ -987,7 +987,9 @@ $('app').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||
  else if(d.x==='agod'){if(adminOn)st.god=!st.god}
  else if(d.x==='aspd'){if(adminOn)gs=gs===1?2:gs===2?4:1}
  else if(d.x==='akill'){if(adminOn)st.en=st.en.filter(u=>!(u.x>=cam.x&&u.x<=cam.x+VW&&u.y>=cam.y&&u.y<=cam.y+VH))}
- else if(d.x==='aevo'){if(adminOn)sel.forEach(u=>{u.lv=11;u.ev=3;calc(u)})}
+ else if(d.x==='aev1'){if(adminOn){let n=0;sel.forEach(u=>{if(u.t==='s'||u.t==='m'||u.ev>=3)return;u.lv=11;u.ev++;calc(u);u.hp=u.mh;n++});msg(n?'관리자: 선택 로봇 '+n+'대 진화 +1단계':'진화할 수 있는 전투 로봇을 선택해 주세요 (3단계 미만)')}}
+  else if(d.x==='afrz'){if(adminOn){st.frz=!st.frz;msg(st.frz?'⏸ 관리자: 게임 정지 (화면 이동·상점·업그레이드는 돼요)':'▶ 관리자: 게임 다시 진행')}}
+  else if(d.x==='aevo'){if(adminOn)sel.forEach(u=>{u.lv=11;u.ev=3;calc(u)})}
  else if(d.x==='araid'){if(adminOn){st.nr=st.t+30;st.rw=0}}
  else if(d.x==='aheal'){if(adminOn)st.B.hp=st.B.mh}
  else if(d.x==='atime'){if(adminOn){st.t+=600;if(st.nr!==undefined)st.nr+=600}}
@@ -1034,7 +1036,7 @@ function hud(){lolhud();tutTick();$('defeat').hidden=!(scene==='game'&&st.lost&&
  const upc=me.reduce((a,u)=>a+(u.lv<11?15+10*u.lv:0),0);lab('usel','선택 로봇 업그레이드',upc?'◆ '+upc:'최고',upc>0&&st.ore>=15+10*Math.min(...me.filter(u=>u.lv<11).map(u=>u.lv)));
  const evl=me.filter(u=>u.lv>=11&&u.ev<3),evc=evl.reduce((a,u)=>a+EV[u.ev],0);lab('uevo','진화 (11레벨만)',evl.length?'진화석 '+evc:'',evl.length>0&&st.stone>=evc);{const sv=me.reduce((a,u)=>a+sellV(u),0),ss2=me.reduce((a,u)=>a+sellS(u),0);lab('usell',sa?'정말 판매할까요? 한 번 더':'선택 로봇 판매',me.length?'◆ +'+sv+(ss2?' · 진화석 +'+ss2:''):'',me.length>0)}
  Object.keys(T).forEach(k=>{const all=st.rb.filter(u=>u.t===k),g=all.filter(u=>u.lv<11),gc=g.reduce((a,u)=>a+15+10*u.lv,0);lab('u'+k,T[k].n+' 전체 업그레이드 ('+all.length+')',gc?'◆ '+gc:'',gc>0&&st.ore>=15+10*Math.min(...g.map(u=>u.lv)))});
- lab('xall','전체 선택 (E)','',1);lab('xhome','기지로 귀환','',1);lab('xcam','기지 보기 (Q)','',1);lab('xsave','저장하고 로비로','',1);lab('xshop','상점 열기 (Y)','',1);$('tadm').hidden=!adminOn;[['aore','관리자 · 광석 +1000'],['astone','관리자 · 진화석 +50'],['amap','관리자 · 지도 전부 밝히기'],['amax','관리자 · 선택 로봇 Lv11'],['aheal','관리자 · 기지 체력 회복'],['atime','관리자 · 플레이 시간 +10분'],['ar0','관리자 · 레이드: 약한'],['ar1','관리자 · 레이드: 보통'],['ar2','관리자 · 레이드: 강한'],['ar3','관리자 · 레이드: 매우 강한'],['ar4','관리자 · 레이드: 재앙급'],['agod',''],['aspd',''],['akill','관리자 · 화면 안 적 전부 제거'],['aevo','관리자 · 선택 로봇 진화 3단계'],['araid','관리자 · 다음 레이드 30초 전으로']].forEach(([k,n])=>{lab('x'+k,n,'',1);$('x'+k).hidden=!adminOn});lab('xagod','관리자 · 무적 '+(st.god?'ON':'OFF'),'',1);lab('xaspd','관리자 · 게임 속도 ×'+gs,'',1);lab('xquit',qa?'정말 종료할까요? 한 번 더':'게임 종료',st.t>=600?'청석 +'+csG():'청석은 10분부터',1);
+ lab('xall','전체 선택 (E)','',1);lab('xhome','기지로 귀환','',1);lab('xcam','기지 보기 (Q)','',1);lab('xsave','저장하고 로비로','',1);lab('xshop','상점 열기 (Y)','',1);$('tadm').hidden=!adminOn;[['aore','관리자 · 광석 +1000'],['astone','관리자 · 진화석 +50'],['amap','관리자 · 지도 전부 밝히기'],['amax','관리자 · 선택 로봇 Lv11'],['aheal','관리자 · 기지 체력 회복'],['atime','관리자 · 플레이 시간 +10분'],['ar0','관리자 · 레이드: 약한'],['ar1','관리자 · 레이드: 보통'],['ar2','관리자 · 레이드: 강한'],['ar3','관리자 · 레이드: 매우 강한'],['ar4','관리자 · 레이드: 재앙급'],['agod',''],['aspd',''],['akill','관리자 · 화면 안 적 전부 제거'],['aevo','관리자 · 선택 로봇 진화 3단계'],['aev1','관리자 · 선택 로봇 진화 +1단계'],['araid','관리자 · 다음 레이드 30초 전으로']].forEach(([k,n])=>{lab('x'+k,n,'',1);$('x'+k).hidden=!adminOn});lab('xagod','관리자 · 무적 '+(st.god?'ON':'OFF'),'',1);lab('xaspd','관리자 · 게임 속도 ×'+gs,'',1);lab('xafrz','관리자 · 게임 일시정지 '+(st.frz?'ON ⏸':'OFF'),st.frz?'시간·적·로봇 모두 멈춤':'',1);$('xafrz').hidden=!adminOn;lab('xquit',qa?'정말 종료할까요? 한 번 더':'게임 종료',st.t>=600?'청석 +'+csG():'청석은 10분부터',1);
  const c={};sel.forEach(u=>c[u.t]=(c[u.t]||0)+1);$('sel').textContent=sel.size?'선택 '+sel.size+': '+Object.keys(c).map(k=>T[k].n+' '+c[k]).join(' · ')+((sc=[...sel].filter(u=>u.t==='s')).length?' · 정찰 연료 '+Math.round(sc.reduce((a,u)=>a+u.f/u.fm,0)/sc.length*100)+'%':''):'선택한 로봇이 없어요';
  if(mt>0&&(mt-=1/60)<=0)$('msg').textContent=''}
 const pos=e=>{const R=cv.getBoundingClientRect(),k=VW/R.width;return{sx:(e.clientX-R.left)*k,sy:(e.clientY-R.top)*k}};
@@ -1259,7 +1261,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261123-190935';
+const APPVER='20261123-191614';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
