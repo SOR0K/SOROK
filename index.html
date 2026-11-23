@@ -361,6 +361,7 @@ canvas.bpv{width:92px!important;aspect-ratio:140/84;border-radius:6px}
 #shopw .sp button:not(.no){border-color:#2fa860;box-shadow:inset 3px 0 0 #3ae07a}
 #shopw .sp button.no{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
 #simp{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:30;background:rgba(12,18,28,.94);border:1px solid #c9a255;border-radius:10px;padding:8px 12px;color:#e8eef7;font-size:13px;max-width:calc(100vw - 32px);box-shadow:0 6px 20px rgba(0,0,0,.5)}#simp b{color:#ffd76a}#simp .md{padding:1px 7px;border-radius:5px;background:#26354d}#simp .sp2{display:flex!important;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center;grid-template-columns:none!important}#simp button{display:inline-block!important;width:auto!important;flex:0 0 auto!important;margin:0!important;padding:3px 9px!important;font-size:12px!important;min-height:0!important;border-left-width:1px}#simp button.on{border-color:#ffd76a;color:#ffd76a}#simp .sbar{height:6px;background:#26354d;border-radius:3px;margin-top:6px;overflow:hidden}#simp .sbar i{display:block;height:100%;background:#ffd76a}
+.simcfg{display:flex;flex-direction:column;gap:10px;margin:8px 0 10px;padding:10px;border:1px solid #2b3640;border-radius:8px;background:#10161c}.simcfg b{font-size:13px;color:#e8c36a}.sci{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px}.sci label{font-size:12.5px;display:flex;align-items:center;gap:4px}.sci input{width:54px;background:#0b1015;color:var(--ink);border:1px solid #33414d;padding:4px 6px;font-size:13px}#lobby .sci button{flex:0 0 auto;padding:5px 10px;font-size:12px;border-left-width:1px}#lobby .sci button.on{border-color:#ffd76a;color:#ffd76a;background:#2a2414}
 .simr{border:1px solid #2b3640;border-radius:8px;padding:8px 10px;margin:8px 0;background:#10161c}.simr summary{cursor:pointer;font-size:14px}.simr h4{margin:12px 0 4px;font-size:13px;color:#e8c36a}
 .stl{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:8px}.stl div{background:#141b22;border:1px solid #232d37;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;gap:2px}.stl span{font-size:11px;color:#8a9bad}.stl b{font-size:15px}
 .slg{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:#aab6c2;margin-top:2px}.slg i{display:inline-block;width:10px;height:3px;margin-right:4px;vertical-align:middle}
@@ -1086,7 +1087,8 @@ function simTo(now){let el=(now-lastSim)/1000;lastSim=now;if(!(el>0))return;el=M
 setInterval(()=>{if(document.hidden&&scene==='game')simTo(performance.now())},1000);
 
 /* ===== 시뮬레이터 모드 (관리자) ===== */
-const SIM={on:false,fast:false,max:4800,spd:8,follow:true};
+const SIM={on:false,fast:false,max:4800,spd:8,follow:true,cc:20,cr:10,ch:10,evo:true,ec:10,er:10,eh:2,up:'focus'};try{Object.assign(SIM,JSON.parse(localStorage.getItem('sorok_simcfg')||'{}'),{on:false,fast:false})}catch(e){}
+const simCfgSave=()=>{try{const{cc,cr,ch,evo,ec,er,eh,up,max}=SIM;localStorage.setItem('sorok_simcfg',JSON.stringify({cc,cr,ch,evo,ec,er,eh,up,max}))}catch(e){}};
 let B=null,mode='build',startP=0,scoutT=0,T0=null;
 const isArmy=u=>u.t==='c'||u.t==='r'||u.t==='h';
 const buy=t=>{if(st.ore<T[t].c)return false;st.ore-=T[t].c;SS().made++;SS().spRobot+=T[t].c;st.rb.push(mkP(t,B.x+rnd(-40,50),B.y+rnd(-50,40)));return true};
@@ -1106,14 +1108,14 @@ function simBot(){B=st.B;const R=st.rb,cnt=t=>R.filter(u=>u.t===t).length,cap=st
  if(T0&&!seen(T0.x,T0.y)&&!(st.vbcd>0)&&st.ore>=60){st.ore-=60;SS().spItem+=60;st.vbcd=300;reveal(T0.x,T0.y,180);st.vbN=(st.vbN||0)+1}
  sc.forEach(u=>{if(u.tx==null){if(false){}else{const a=Math.random()*Math.PI/2-Math.PI/2,r=rnd(400,700+st.t/2);u.tx=cl(B.x+Math.cos(a)*r,0,W);u.ty=cl(B.y+Math.sin(a)*r,0,W)}}});
  // army build
- const cap2=Math.min(40-(st.dead||[]).length,14+2*cap);if(army.length<cap2&&st.ore>=70){const c=cnt('c'),r=cnt('r'),h=cnt('h');buy(h*3<c+r?'h':c<2*r?'c':'r')}
+ const TT=SIM.cc+SIM.cr+SIM.ch||1,cap2=Math.min(TT-(st.dead||[]).length,14+2*cap);if(army.length<cap2&&st.ore>=70){const dd=(st.dead||[]),N=army.length+dd.length+1,c=cnt('c')+dd.filter(d=>d.t==='c').length,r=cnt('r')+dd.filter(d=>d.t==='r').length,h=cnt('h')+dd.filter(d=>d.t==='h').length,df=[['c',SIM.cc/TT-c/N],['r',SIM.cr/TT-r/N],['h',SIM.ch/TT-h/N]].filter(q=>SIM['c'+q[0]]>0).sort((a,b)=>b[1]-a[1]);if(df.length)buy(df[0][0])}
  // upgrades
- const core=new Set([...R.filter(u=>u.t==='c').sort((a,b)=>a.id-b.id).slice(0,10),...R.filter(u=>u.t==='r').sort((a,b)=>a.id-b.id).slice(0,10),...R.filter(u=>u.t==='h').sort((a,b)=>a.id-b.id).slice(0,2)]);
- for(let k=0;k<3&&st.ore>150;k++){const L=army.filter(u=>u.lv<11).sort((a,b)=>(core.has(b)?100:0)+b.lv-((core.has(a)?100:0)+a.lv))[0];if(!L||!lvup(L))break}
+ const core=new Set([...R.filter(u=>u.t==='c').sort((a,b)=>a.id-b.id).slice(0,SIM.ec),...R.filter(u=>u.t==='r').sort((a,b)=>a.id-b.id).slice(0,SIM.er),...R.filter(u=>u.t==='h').sort((a,b)=>a.id-b.id).slice(0,SIM.eh)]),foc=SIM.up==='focus';
+ for(let k=0;k<3&&st.ore>150;k++){const L=army.filter(u=>u.lv<11).sort((a,b)=>foc?(core.has(b)?100:0)+b.lv-((core.has(a)?100:0)+a.lv):a.lv-b.lv)[0];if(!L||!lvup(L))break}
  if(st.ore>120&&st.mines.some(m=>m.ev&&seen(m.x,m.y))){const m=R.filter(u=>u.t==='m'&&u.lv<6).sort((a,b)=>b.lv-a.lv)[0];if(m)lvup(m)}
  if(st.ore>400){const m=R.filter(u=>u.t==='m'&&u.lv<11)[0];if(m)lvup(m)}
  // evolve
- const ev=R.filter(u=>u.lv>=11&&u.ev<3&&isArmy(u)&&(core.has(u)||st.stone>200)).sort((a,b)=>(a.t==='r'?0:a.t==='c'?1:2)-(b.t==='r'?0:b.t==='c'?1:2))[0];if(ev&&st.stone>=EV[ev.ev]){st.stone-=EV[ev.ev];SS().stUsed+=EV[ev.ev];ev.ev++;calc(ev)}
+ const ev=!SIM.evo?null:R.filter(u=>u.lv>=11&&u.ev<3&&isArmy(u)&&(core.has(u)||st.stone>200)).sort((a,b)=>(a.t==='r'?0:a.t==='c'?1:2)-(b.t==='r'?0:b.t==='c'?1:2))[0];if(ev&&st.stone>=EV[ev.ev]){st.stone-=EV[ev.ev];SS().stUsed+=EV[ev.ev];ev.ev++;calc(ev)}
  // control
  const P=army.reduce((a,u)=>a+pP(u),0);
  if(raidOn){mode='defend';army.forEach(u=>{if(dist(u.x,u.y,B.x,B.y)>250){u.tx=B.x+rnd(-60,60);u.ty=B.y+rnd(-60,60);u.tgt=null}});return}
@@ -1139,7 +1141,7 @@ function simTick(dt){SIM.acc+=dt;SIM.racc+=dt;if(SIM.acc>=1){SIM.acc=0;try{simBo
  const ra=st.en.some(e=>e.raid);if(ra&&!SIM.pr)SIM.rs++;SIM.pr=ra;if(SIM.first==null&&st.outs.some(o=>o.cap))SIM.first=st.t;
  if(SIM.racc>=60){SIM.racc=0;simRec()}
  if(st.lost||st.won||st.t>=SIM.max)simEnd()}
-function simEnd(stop){if(!SIM.on)return;simRec();const S=SS(),r={d:new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),res:st.won?'승리':st.lost?'패배':stop?'중단':'생존',t:Math.round(st.t),cap:st.outs.filter(o=>o.cap).length,rs:SIM.rs,rw:st.raidWins||0,made:S.made,lost:S.lost,kills:S.kills,earn:Math.round(S.earn),stE:S.stEarn|0,first:SIM.first==null?null:Math.round(SIM.first),fast:SIM.fast,rec:SIM.rec};
+function simEnd(stop){if(!SIM.on)return;simRec();const S=SS(),r={d:new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),res:st.won?'승리':st.lost?'패배':stop?'중단':'생존',t:Math.round(st.t),cap:st.outs.filter(o=>o.cap).length,rs:SIM.rs,rw:st.raidWins||0,made:S.made,lost:S.lost,kills:S.kills,earn:Math.round(S.earn),stE:S.stEarn|0,first:SIM.first==null?null:Math.round(SIM.first),fast:SIM.fast,cfg:{cc:SIM.cc,cr:SIM.cr,ch:SIM.ch,evo:SIM.evo,ec:SIM.ec,er:SIM.er,eh:SIM.eh,up:SIM.up},rec:SIM.rec};
  const L=simLoad();L.unshift(r);try{localStorage.setItem('sorok_sim',JSON.stringify(L.slice(0,8)))}catch(e){}
  SIM.on=false;SIM.fast=false;gs=1;simPanel(false);reset();lobby('lset');setTimeout(()=>{const e=$('simres');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})},60)}
 function simPanel(show){let p=$('simp');if(show===false){if(p)p.remove();return}
@@ -1157,17 +1159,23 @@ function simSvg(rec,series,ymax,unit){const W2=560,H2=190,L=34,Rr=10,Tp=10,Bt=26
 function simHtml(){const L=simLoad();if(!L.length)return '<p class="cd">아직 시뮬 결과가 없어요. 위 버튼으로 시뮬을 돌려 보세요.</p>';
  return L.map((r,i)=>{const fm=s=>(s/60|0)+'분 '+String(s%60).padStart(2,'0')+'초',rec=r.rec||[],ten=rec.filter((q,j)=>j===rec.length-1||Math.round(q.m)%10===0&&Math.abs(q.m-Math.round(q.m))<.05);
   const col=r.res==='패배'?'#ff8a7a':r.res==='승리'?'#ffd76a':'#7fe0a0';
-  return `<details class="simr" ${i===0?'open':''}><summary><b style="color:${col}">${r.res}</b> · ${fm(r.t)} · 정복 ${r.cap}/50 · <span class="cd">${r.d}${r.fast?' · 빠른 시뮬':''}</span></summary>
+  return `<details class="simr" ${i===0?'open':''}><summary><b style="color:${col}">${r.res}</b> · ${fm(r.t)} · 정복 ${r.cap}/50 · <span class="cd">${r.d}${r.fast?' · 빠른 시뮬':''}</span>${r.cfg?`<div class="cd" style="font-size:12px;margin-top:3px">조합 근접 ${r.cfg.cc} · 원거리 ${r.cfg.cr} · 지원 ${r.cfg.ch} · ${r.cfg.evo?'진화 ON (근접 '+r.cfg.ec+' · 원거리 '+r.cfg.er+' · 지원 '+r.cfg.eh+')':'진화 OFF'} · 업그레이드 ${r.cfg.up==='focus'?'집중':'골고루'}</div>`:''}</summary>
   <div class="stl"><div><span>결과</span><b style="color:${col}">${r.res}</b></div><div><span>버틴 시간</span><b>${fm(r.t)}</b></div><div><span>정복한 기지</span><b>${r.cap} / 50</b></div><div><span>첫 정복</span><b>${r.first==null?'없음':fm(r.first)}</b></div><div><span>레이드 방어</span><b>${r.rw} / ${r.rs}</b></div><div><span>만든 로봇</span><b>${r.made}</b></div><div><span>죽은 로봇</span><b>${r.lost}</b></div><div><span>잡은 적</span><b>${r.kills}</b></div><div><span>번 광석</span><b>${r.earn.toLocaleString()}</b></div><div><span>모은 진화석</span><b>${r.stE}</b></div></div>
   <h4>레벨 변화</h4>${rec.length>1?simSvg(rec,[['lv','#ffd76a',0,'우리 전투 로봇 평균 Lv'],['mx','#7fd8ff',0,'우리 최고 Lv'],['rl','#ff6a5a',1,'레이드 Lv (나타났을 때)']],11):''}
   <h4>군대·정복 변화</h4>${rec.length>1?simSvg(rec,[['n','#7fe0a0',0,'전투 로봇 수'],['ev','#c79bff',0,'진화한 로봇'],['cap','#ffd76a',0,'정복한 기지']],40):''}
   <h4>10분마다 기록</h4><div style="overflow-x:auto"><table class="stb"><tr><th>시간</th><th>전투 로봇</th><th>평균 Lv</th><th>최고 Lv</th><th>진화 (3단계)</th><th>진화석</th><th>정복</th><th>기지 체력</th><th>번 광석</th></tr>${ten.map(q=>`<tr><td>${Math.round(q.m)}분</td><td>${q.n}${q.dead?' (+'+q.dead+')':''}</td><td>${q.lv}</td><td>${q.mx}</td><td>${q.ev} (${q.ev3})</td><td>${q.sto}</td><td>${q.cap}</td><td>${q.bhp}</td><td>${q.ore.toLocaleString()}</td></tr>`).join('')}</table></div></details>`}).join('')+'<div class="row2"><button data-sim="clr">시뮬 기록 지우기</button></div>'}
 function simAdm(){return `<h3 id="simres" style="margin-top:18px">🤖 시뮬레이터 모드</h3><p class="cd">봇이 게임을 자동으로 플레이해요. 끝나면 결과가 아래에 표와 그래프로 나와요. 시뮬 중에는 저장·청석·배틀패스가 바뀌지 않아요.</p>
  <div class="row2"><label class="cd" style="display:flex;align-items:center;gap:6px">시뮬 길이 <select id="simmax" style="background:#10151a;color:var(--ink);border:1px solid #33414d;padding:6px">${[30,45,60,80,100,120].map(m=>`<option value="${m}" ${SIM.max===m*60?'selected':''}>${m}분</option>`).join('')}</select></label></div>
+ <div class="simcfg"><div><b>로봇 조합</b> <span class="cd">(합계 최대 40)</span><div class="sci"><label>근접 <input type="number" min="0" max="40" data-sc="cc" value="${SIM.cc}"></label><label>원거리 <input type="number" min="0" max="40" data-sc="cr" value="${SIM.cr}"></label><label>지원 <input type="number" min="0" max="40" data-sc="ch" value="${SIM.ch}"></label><span class="cd" id="simsum">합계 ${SIM.cc+SIM.cr+SIM.ch}</span></div>
+ <div class="sci">${[['20·10·10',20,10,10],['15·15·10',15,15,10],['25·10·5',25,10,5],['10·20·10',10,20,10],['14·14·12',14,14,12]].map(([n,a,b,c])=>`<button data-scp="${a},${b},${c}">${n}</button>`).join('')}</div></div>
+ <div><b>진화</b><div class="sci"><button data-sev="1" class="${SIM.evo?'on':''}">진화 ON</button><button data-sev="0" class="${SIM.evo?'':'on'}">진화 OFF</button></div>
+ <div class="sci" style="${SIM.evo?'':'opacity:.4'}"><span class="cd">진화 대상 (먼저 Lv11 만들고 진화할 로봇 수)</span><label>근접 <input type="number" min="0" max="40" data-sc="ec" value="${SIM.ec}"></label><label>원거리 <input type="number" min="0" max="40" data-sc="er" value="${SIM.er}"></label><label>지원 <input type="number" min="0" max="40" data-sc="eh" value="${SIM.eh}"></label></div></div>
+ <div><b>업그레이드 방식</b><div class="sci"><button data-sup="focus" class="${SIM.up==='focus'?'on':''}">집중 (진화 대상 먼저 Lv11)</button><button data-sup="even" class="${SIM.up==='even'?'on':''}">골고루 (낮은 레벨부터)</button></div></div></div>
  <div class="row2"><button data-sim="watch">관전 시뮬 시작 (배속으로 지켜보기)</button><button data-sim="fast">빠른 시뮬 (결과만 바로)</button></div><div id="simlist">${simHtml()}</div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-sim]');if(!b||!adminOn)return;const k=b.dataset.sim,sm=$('simmax');if(sm)SIM.max=+sm.value*60;
  if(k==='watch')simStart(false);else if(k==='fast')simStart(true);else if(k==='clr'){try{localStorage.removeItem('sorok_sim')}catch(e){}renderAdm()}});
-document.addEventListener('change',e=>{if(e.target&&e.target.id==='simmax')SIM.max=+e.target.value*60});
+document.addEventListener('change',e=>{const t=e.target;if(!t)return;if(t.id==='simmax'){SIM.max=+t.value*60;simCfgSave()}if(t.dataset&&t.dataset.sc){SIM[t.dataset.sc]=Math.max(0,Math.min(40,Math.round(+t.value||0)));if(['cc','cr','ch'].includes(t.dataset.sc)){const over=SIM.cc+SIM.cr+SIM.ch-40;if(over>0)SIM[t.dataset.sc]-=over}simCfgSave();renderAdm()}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-scp],[data-sev],[data-sup]');if(!b||!adminOn)return;const d=b.dataset;if(d.scp){const[a,c,h]=d.scp.split(',').map(Number);SIM.cc=a;SIM.cr=c;SIM.ch=h}if(d.sev)SIM.evo=d.sev==='1';if(d.sup)SIM.up=d.sup;simCfgSave();renderAdm()});
 
 function loop(t){last=t;simTo(performance.now());draw();hud();$('ssv').textContent=SV.ss||0;if(!$('lobby').hidden&&!$('lmain').hidden){prevHome($('homepv'),t/1000);if(PRO.length){if(t-promoT>5500){promoT=t;promoI=(promoI+1)%PRO.length;renderPromo()}const pc=$('promopv');if(pc)PRO[promoI].dr(pc,t/1000)}}if(!$('lshop').hidden||!$('lpass').hidden||!$('lstore').hidden)document.querySelectorAll('.pv').forEach(c=>c.dataset.mset!==undefined?prevS(c,MSET[+c.dataset.mset],t/1000):c.dataset.set!==undefined?prevS(c,SETS[+c.dataset.set],t/1000):c.dataset.t!==undefined?prevT(c,TS.find(q=>q.id===c.dataset.t)||null,t/1000):c.dataset.b!==undefined?prevB(c,BS.find(q=>q.id===c.dataset.b)||null,t/1000):prev(c,SK.find(q=>q.id===c.dataset.s)||null,t/1000));requestAnimationFrame(loop)}
 const hasSave=()=>{try{return !!localStorage.getItem('sorok_save')}catch(e){return false}};
@@ -1354,7 +1362,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261123-194734';
+const APPVER='20261123-195339';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
