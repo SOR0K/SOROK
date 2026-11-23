@@ -860,7 +860,7 @@ function drawWin(){const T0=performance.now()/1000,t=T0-(st.wonAt||T0),cx=VW/2,c
  const dt=1/60;for(let i=WFX.length-1;i>=0;i--){const p=WFX[i];p.l-=dt;if(p.cf){p.x+=p.vx*dt;p.y+=p.vy*dt;p.a+=dt*6;if(p.y>VH+10)p.l=0}else{p.vx*=.97;p.vy=p.vy*.97+90*dt;p.x+=p.vx*dt;p.y+=p.vy*dt}
   if(p.l<=0){WFX.splice(i,1);continue}x.globalAlpha=Math.min(1,p.l*1.4);x.fillStyle=p.c;if(p.cf){x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillRect(-4,-2,8,4);x.restore()}else{x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill()}}x.globalAlpha=1;
  const sc=t<.6?.4+1.0*(t/.6)+.15*Math.sin(t/.6*Math.PI):1+.03*Math.sin(t*3);x.translate(cx,cy);x.scale(sc,sc);x.textAlign='center';x.textBaseline='middle';
- x.font='900 '+Math.round(Math.min(110,VW*.09))+'px "Noto Sans KR",sans-serif';x.shadowColor='rgba(255,200,60,.9)';x.shadowBlur=30;const gg=x.createLinearGradient(0,-50,0,50);gg.addColorStop(0,'#fff6c8');gg.addColorStop(.5,'#ffd24a');gg.addColorStop(1,'#e08a16');x.fillStyle=gg;x.fillText('승리!',0,0);x.shadowBlur=0;x.lineWidth=3;x.strokeStyle='rgba(90,50,0,.6)';x.strokeText('승리!',0,0);
+ x.font='900 '+Math.round(Math.min(110,VW*.09))+'px "Noto Sans KR",sans-serif';x.lineJoin='round';x.shadowColor='rgba(255,190,50,.85)';x.shadowBlur=34;x.lineWidth=10;x.strokeStyle='#5a3300';x.strokeText('승리!',0,0);x.shadowBlur=0;const gg=x.createLinearGradient(0,-50,0,50);gg.addColorStop(0,'#fff8d6');gg.addColorStop(.55,'#ffd24a');gg.addColorStop(1,'#f0a020');x.fillStyle=gg;x.fillText('승리!',0,0);
  x.restore();x.save();x.textAlign='center';
  if(t>.7){x.globalAlpha=Math.min(1,(t-.7)*2);x.fillStyle='#e8eef7';x.font='bold '+Math.round(Math.min(24,VW*.02))+'px "Noto Sans KR",sans-serif';x.fillText('외계 기지 50개를 모두 정복했어요!',cx,cy+Math.min(80,VW*.065))}
  if(t>1.4){const S=SS(),a=Math.min(1,(t-1.4)*1.6),w=Math.min(520,VW-40),h=150,px=cx-w/2,py=cy+Math.min(115,VW*.09);x.globalAlpha=a;x.fillStyle='rgba(14,20,30,.92)';rr(x,px,py,w,h,14);x.strokeStyle='#c9a255';x.lineWidth=1.5;x.beginPath();if(x.roundRect)x.roundRect(px,py,w,h,14);x.stroke();
@@ -1474,7 +1474,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261124-021115';
+const APPVER='20261124-021502';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
