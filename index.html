@@ -785,6 +785,7 @@ function bgTick(){const id=bgmId(),M=id?MUS[id]:null,dflt=M?M[2]:260;
 function bgPreview(id){try{const a=au();if(a&&a.state!=='running')a.resume()}catch(e){}bgPrev={id,u:performance.now()+15000};bgT=0;const t=TS.find(q=>q.id===id);$('lmsg').textContent='🎵 '+(t?t.n:'')+' 테마곡 미리듣기 중 (15초)'+(SV.mute?' · 음소거를 풀어야 들려요':'')}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tprev]');if(!b)return;e.stopPropagation();bgPreview(b.dataset.tprev)},true);
 const PN=[['11월 23일 저녁 업데이트',[
+ ['⚔ 전투',['기지 공격 명령을 내리면 로봇들이 기지 앞(포탑 사거리 밖)에 공격 대형으로 모였다가 한꺼번에 돌격해요 (근접 앞 · 원거리 가운데 · 지원 뒤)','지원 로봇은 공격 명령 때 적 기지로 뛰어들지 않고 아군 뒤를 따라가요','여러 로봇에게 이동 명령을 내리면 가장 느린 로봇 속도에 맞춰 같이 움직여요 (진화한 지원 로봇이 혼자 앞서가지 않아요)']],
  ['🔭 시야 폭탄',['게임 후반으로 갈수록 재사용 대기가 짧아져요: 20분까지 5분 → 40분 4분 → 60분 3분 → 80분부터 2분']],
  ['🎵 테마 배경음',['테마마다 배경음이 달라져요 (차가운 종소리 · 경쾌한 · 묵직한 · 전자음 4가지 분위기)','크로 테마는 반짝이는 소리가 한 겹 더 들어가요','★ 걸작 테마 3종은 웅장한 전용 테마곡 (천상 · 화산 · 프리즘 각각 다르게)','걸작 세트를 완성하면 레이드 때 전용 편곡이 나와요','상점 테마 카드에 🎵 미리듣기 버튼 (15초)','설정 → 배경음에서 가진 테마 곡을 골라 들을 수 있어요']],
  ['🔍 정보 표시',['외계 기지에 마우스를 올리면 구역 · 레벨 · 체력 · 포탑 공격력 · 수비대 수 · 정복 보상이 보여요','우리 기지에 올리면 체력 · 포탑 · 우물 정보','광산에 올리면 남은 광석/진화석과 채굴 중인 로봇 수']],
@@ -880,7 +881,7 @@ function reset(){
  outs.forEach(o=>{for(let i=0,n=Math.max(2,Math.round([4,5,6,8,10,13,16][Math.min(6,Math.floor(o.dn*7))]*DF[diff].n)),ne=o.ev?Math.max(1,Math.round(n*.25)):0;i<n;i++)st.en.push(mkE(o,Math.random()<.5?'c':'r',i<ne));st.en.push(mkE(o,'k',o.ev>0&&Math.random()<.25))});
  sel=new Set();cam={x:0,y:W-VH};msg('정찰 로봇을 만들어 주변을 밝혀 보세요. 정찰 로봇은 연료가 다 떨어지면 고장나니 신중하게 보내세요.');
 }
-function mv(u,tx,ty,dt,free){const d=dist(u.x,u.y,tx,ty);if(d<2)return 0;const s=Math.min(d,u.sp*(u.oilT>0?1.2:1)*dt),nx=u.x+(tx-u.x)/d*s,ny=u.y+(ty-u.y)/d*s;
+function mv(u,tx,ty,dt,free){const d=dist(u.x,u.y,tx,ty);if(d<2)return 0;const s=Math.min(d,(u.spc?Math.min(u.sp,u.spc):u.sp)*(u.oilT>0?1.2:1)*dt),nx=u.x+(tx-u.x)/d*s,ny=u.y+(ty-u.y)/d*s;
  if(!free&&u.t!=='s'&&u.team===0&&!seen(nx,ny))return -1;u.fa=Math.atan2(ny-u.y,nx-u.x);u.x=cl(nx,0,W);u.y=cl(ny,0,W);return d-s}
 function near(u,arr,r){let b=null,bd=r;for(const e of arr){const d=dist(u.x,u.y,e.x,e.y);if(d<bd){bd=d;b=e}}return b}
 function hit(a,b,d){if(st){a.cbt=st.t;b.cbt=st.t}if(a.base)sfxAt('myturret',a.x,a.y);else if(a.s!==undefined)sfxAt('turret',a.x,a.y);else if(a.team===0)sfxAt(a.rng>40?'shoot':'hit',a.x,a.y);else sfxAt('ehit',a.x,a.y);if(b.t==='k'&&b.team===1&&a.team===0)b.ag=a;a.fa=Math.atan2(b.y-a.y,b.x-a.x);const k=a.team===0?KRO():TKRO();
@@ -905,7 +906,7 @@ function smartAI(u,dt){u.ai=(u.ai||0)-dt;
  return false}
 const WELL=300;function well(u,dt){u.wh=0;if(u.hp<=0||u.hp>=u.mh)return;if(dist(u.x,u.y,st.B.x,st.B.y)>WELL)return;const r=st.t-(u.cbt??-99)<3?.03:.1;u.hp=Math.min(u.mh,u.hp+u.mh*r*dt);u.wh=r}
 function ctrl(u,dt){
- u.cd-=dt;well(u,dt);if(u.oilT>0)u.oilT-=dt;
+ u.cd-=dt;well(u,dt);if(u.sq)sqTick(u);else if(u.spc&&u.tx==null)u.spc=0;if(u.oilT>0)u.oilT-=dt;
  if(u.t==='s'){const ox=u.x,oy=u.y;if(u.tx!=null&&mv(u,u.tx,u.ty,dt,1)<=2)u.tx=null;u.f-=dist(ox,oy,u.x,u.y);reveal(u.x,u.y,vis(u));if(u.f<=0){u.hp=0;msg('정찰 로봇의 연료가 떨어져 고장났어요')}return}
  if(u.t==='m'){if(u.mine){const m=u.mine,B=st.B;
    if(m.amt<=0&&u.st!=='back'){u.mine=null;msg('광산이 바닥났어요. 다른 광산을 지정해 주세요')}
@@ -1122,13 +1123,20 @@ function click(wx,wy){
  if(st.drMode){st.drMode=0;if(st.ore<25)return;st.ore-=25;SS().spItem+=25;st.dcd=8;st.dr=st.dr||[];st.dr.push({x:wx,y:wy,t:4});sfx('drone');msg('정찰 드론 투하! 4초 동안 보여요');return}
  if(st.vbMode){st.vbMode=0;if(st.ore<60)return;st.ore-=60;SS().spItem+=60;st.vbcd=vbCD();reveal(wx,wy,180);st.fx.push({ring:1,c:wx,d:wy,t:.6,r:180});boom(wx,wy,'#ffe27a',{pc:['#ffffff','#ffe27a']});sfx('vbomb');msg('시야 폭탄! 주변이 영구적으로 밝혀졌어요 · 다음 폭탄까지 '+Math.floor(st.vbcd/60)+':'+String(st.vbcd%60).padStart(2,'0'));return}
  const mine=st.rb.find(u=>dist(u.x,u.y,wx,wy)<20);if(mine){sel=new Set([mine]);return}
- const us=[...sel];if(!us.length)return;
+ const us=[...sel];if(!us.length)return;us.forEach(u=>{u.sq=null});
  const tg=[...st.en,...st.outs.filter(o=>!o.cap)].find(e=>seen(e.x,e.y)&&dist(e.x,e.y,wx,wy)<(e.s?44:18));
- if(tg){let n=0;us.forEach(u=>{if(u.t==='c'||u.t==='r'){u.tgt=tg;u.tx=null;n++}else{u.tx=wx;u.ty=wy}});if(!n)msg('공격할 수 있는 로봇이 선택되지 않았어요');else cmdFx('atk',tg.x,tg.y,tg,us.filter(u=>u.t==='c'||u.t==='r'));return}
+ us.forEach(u=>{u.sq=null;u.spc=0});if(tg){let n=0;us.forEach(u=>{if(u.t==='c'||u.t==='r'){u.tgt=tg;u.tx=null;n++}else if(u.t==='h'){u.tx=null;u.tgt=null}else{u.tx=wx;u.ty=wy}});if(!n)msg('공격할 수 있는 로봇이 선택되지 않았어요');else{cmdFx('atk',tg.x,tg.y,tg,us.filter(u=>u.t==='c'||u.t==='r'));if(tg.s!==undefined)squad(us.filter(u=>u.t==='c'||u.t==='r'||u.t==='h'),tg)}return}
  const mn=st.mines.find(m=>seen(m.x,m.y)&&m.amt>0&&dist(m.x,m.y,wx,wy)<36);
  if(mn&&us.some(u=>u.t==='m')){let bad=0;us.forEach(u=>{if(u.t==='m'){if(mn.ev&&u.lv<6){bad++;return}u.mine=mn;u.st='go';u.tx=null;u.c=0}});cmdFx('mine',mn.x,mn.y,mn,us.filter(u=>u.t==='m'));if(bad)msg('진화 광산은 6레벨 이상 채굴 로봇만 캘 수 있어요');return}
  if(us.some(u=>u.t!=='s')&&!seen(wx,wy)){msg('어두운 곳으로는 정찰 로봇만 갈 수 있어요');if(!us.every(u=>u.t!=='s'))us.forEach(u=>{if(u.t==='s')u.tx=wx,u.ty=wy});return}
- us.forEach((u,i)=>{const a=i*2.4,r=i?19*Math.sqrt(i):0;u.tx=wx+Math.cos(a)*r;u.ty=wy+Math.sin(a)*r;u.tgt=null;if(u.t==='m'){u.mine=null;u.c=0}});cmdFx('mv',wx,wy,null,us)}
+ {const ms=Math.min(...us.filter(u=>u.t!=='s').map(u=>u.sp));us.forEach((u,i)=>{const a=i*2.4,r=i?19*Math.sqrt(i):0;u.tx=wx+Math.cos(a)*r;u.ty=wy+Math.sin(a)*r;u.tgt=null;u.spc=us.length>1&&u.t!=='s'&&isFinite(ms)?ms:0;if(u.t==='m'){u.mine=null;u.c=0}})}cmdFx('mv',wx,wy,null,us)}
+function squad(us,tg){const A=us.filter(u=>u.t!=='h');if(A.length<3||us.every(u=>dist(u.x,u.y,tg.x,tg.y)<420))return;
+ const cx=us.reduce((a,u)=>a+u.x,0)/us.length,cy=us.reduce((a,u)=>a+u.y,0)/us.length,d0=dist(cx,cy,tg.x,tg.y)||1,dx=(cx-tg.x)/d0,dy=(cy-tg.y)/d0,px=-dy,py=dx,G={tg,ph:'gather',t0:st.t,m:us,sp:Math.min(...us.map(u=>u.sp))};
+ let row=0;['c','r','h'].forEach(t=>{const L=us.filter(u=>u.t===t);for(let i=0;i<L.length;i+=8){const R=L.slice(i,i+8);R.forEach((u,j)=>{const off=(j-(R.length-1)/2)*24,D=370+row*24;u.sq=G;u.tgt=null;u.tx=tg.x+dx*D+px*off;u.ty=tg.y+dy*D+py*off;u.spc=0});row++}});
+ msg('⚔ 공격 대형으로 모이는 중… 다 모이면 한꺼번에 돌격해요')}
+function sqTick(u){const G=u.sq;if(!G)return;if(G.tg.cap||G.tg.hp<=0||st.t-G.t0>60){u.sq=null;u.spc=0;return}
+ if(G.ph==='gather'){const L=G.m.filter(q=>q.hp>0&&q.sq===G),ok=L.filter(q=>q.tx==null).length;if(st.t-G.t0>14||ok>=Math.ceil(L.length*.85)){G.ph='go';G.go=st.t;L.forEach(q=>{q.tx=null;if(q.t!=='h')q.tgt=G.tg});if(L.length)msg('⚔ 돌격!')}}
+ else{u.spc=u.t==='h'?G.sp:0;if(st.t-G.go>20){u.sq=null;u.spc=0}}}
 function cmdFx(kind,X,Y,tg,us){st.fx.push({cm:kind,c:X,d:Y,tg:tg||null,t:.75,pts:us?us.map(u=>[u.x,u.y]):null});try{if(AC&&AC.state==='running'&&!SV.mute){if(kind==='atk'){tn(520,.06,'square',.03);tn(390,.09,'square',.025,.05)}else{tn(980,.05,'sine',.045);tn(1470,.07,'sine',.035,.04)}}}catch(e){}}
 cv.oncontextmenu=e=>e.preventDefault();
 cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);const p=pos(e);
@@ -1247,7 +1255,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-scp],[data
 
 function loop(t){last=t;simTo(performance.now());draw();hud();$('ssv').textContent=SV.ss||0;if(!$('lobby').hidden&&!$('lmain').hidden){prevHome($('homepv'),t/1000);if(PRO.length){if(t-promoT>5500){promoT=t;promoI=(promoI+1)%PRO.length;renderPromo()}const pc=$('promopv');if(pc)PRO[promoI].dr(pc,t/1000)}}if(!$('lshop').hidden||!$('lpass').hidden||!$('lstore').hidden)document.querySelectorAll('.pv').forEach(c=>c.dataset.mset!==undefined?prevS(c,MSET[+c.dataset.mset],t/1000):c.dataset.set!==undefined?prevS(c,SETS[+c.dataset.set],t/1000):c.dataset.t!==undefined?prevT(c,TS.find(q=>q.id===c.dataset.t)||null,t/1000):c.dataset.b!==undefined?prevB(c,BS.find(q=>q.id===c.dataset.b)||null,t/1000):prev(c,SK.find(q=>q.id===c.dataset.s)||null,t/1000));requestAnimationFrame(loop)}
 const hasSave=()=>{try{return !!localStorage.getItem('sorok_save')}catch(e){return false}};
-function saveGame(){try{const S={...st,diff,cam,ex:Array.from(ex).join(''),outs:st.outs.map(o=>({...o,tt:null})),rb:st.rb.map(u=>({...u,mine:u.mine?st.mines.indexOf(u.mine):-1,tgt:null})),en:st.en.map(u=>({...u,ag:null,o:st.outs.indexOf(u.o)})),pr:[],pt:[],fx:[]};localStorage.setItem('sorok_save',JSON.stringify(S,function(k,v){return k&&k!=='B'&&!Array.isArray(this)&&v&&typeof v==='object'&&!Array.isArray(v)&&(v.team!==undefined||v.cap!==undefined)?null:v}))}catch(e){}}
+function saveGame(){try{const S={...st,diff,cam,ex:Array.from(ex).join(''),outs:st.outs.map(o=>({...o,tt:null})),rb:st.rb.map(u=>({...u,mine:u.mine?st.mines.indexOf(u.mine):-1,tgt:null,sq:null,spc:0})),en:st.en.map(u=>({...u,ag:null,o:st.outs.indexOf(u.o)})),pr:[],pt:[],fx:[]};localStorage.setItem('sorok_save',JSON.stringify(S,function(k,v){return k&&k!=='B'&&!Array.isArray(this)&&v&&typeof v==='object'&&!Array.isArray(v)&&(v.team!==undefined||v.cap!==undefined)?null:v}))}catch(e){}}
 function loadGame(){try{const S=JSON.parse(localStorage.getItem('sorok_save'));if(!S)return 0;diff=DF[S.diff]?S.diff:'n';ex=Uint8Array.from(S.ex,c=>+c);cam=S.cam;delete S.ex;delete S.cam;delete S.diff;st=S;st.hold=null;st.drMode=0;st.vbMode=0;st.rb.forEach(u=>{u.mine=u.mine>=0?st.mines[u.mine]:null;u.tgt=null;calc(u)});st.en.forEach(u=>u.o=st.outs[u.o]);uid=Math.max(0,...st.rb.map(u=>u.id),...st.en.map(u=>u.id))+1;sel=new Set();grp={};return 1}catch(e){return 0}}
 addEventListener('pagehide',()=>{if(scene==='game')saveGame()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&scene==='game')saveGame()});
 function lobby(sec,m){scene='lobby';if($('tut'))$('tut').hidden=true;$('lobby').classList.toggle('shopmode',sec==='lshop'||sec==='lpass'||sec==='lstore');paused=false;$('pausew').hidden=true;$('bcont').hidden=!hasSave();$('lobby').hidden=false;['lmain','lplay','lset','lshop','lpass','lstore','lnotes'].forEach(i=>$(i).hidden=i!==sec);if(sec==='lnotes')$('pnbody').innerHTML=PN.map(v=>`<div class="pnv"><b>${v[0]}</b>${v[1].map(([h,L])=>`<h4>${h}</h4><ul>${L.map(l=>`<li>${l}</li>`).join('')}</ul>`).join('')}</div>`).join('');$('csv').textContent=SV.cs;if(m!==undefined)$('lmsg').textContent=m;renderDiff();renderAdm();if(sec==='lshop')renderShop();if(sec==='lstore')renderStore();if(sec==='lset')volUI();if(sec==='lmain')renderMain();if(sec==='lpass'){const t=$('bptrack');if(t)t.remove();renderPass()}}
@@ -1430,7 +1438,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261124-010324';
+const APPVER='20261124-011343';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
