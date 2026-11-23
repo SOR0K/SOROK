@@ -710,9 +710,9 @@ function prev(cv,s,tm){const c=cv.getContext('2d');c.setTransform(cv.width/140,0
  const k=(tm*.9)%1;if(s&&s.g==='kro'){drawPr(c,{x:94+k*40,y:44,vx:1,vy:0,sk:s},tm)}else drawPr(c,{x:94+k*40,y:44,vx:1,vy:0,col:'#7ff0ff'},tm)}
 
 let paused=false,rcBuy=false,gs=1,adminOn=false,sa=0,qa=0,wa=0,scene='lobby',mp=null,sc,st,cam,ex,sel=new Set(),bx=null,dn=null,keys={},grp={},last=0,mt=0,uid=0;
-let MX=VW-190,MY=VH-190,mmd=0;const MS=178;
+let MX=VW-190,MY=VH-190,mmd=0,MS=178;
 function rr(c,a,b,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(a,b,w,h,r);else c.rect(a,b,w,h);c.fill()}
-function fit(){const r=cv.getBoundingClientRect();if(r.width<10)return;VW=Math.max(320,Math.round(r.width));VH=Math.max(240,Math.round(r.height));const D2=Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(VW*D2);cv.height=Math.round(VH*D2);x.setTransform(D2,0,0,D2,0,0);x.imageSmoothingQuality='high';MX=VW-MS-12;MY=VH-MS-12;if(cam){cam.x=cl(cam.x,0,W-VW);cam.y=cl(cam.y,0,W-VH)}}
+function fit(){const r=cv.getBoundingClientRect();if(r.width<10)return;VW=Math.max(320,Math.round(r.width));VH=Math.max(240,Math.round(r.height));const D2=Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(VW*D2);cv.height=Math.round(VH*D2);x.setTransform(D2,0,0,D2,0,0);x.imageSmoothingQuality='high';MS=Math.round(cl(Math.min(VH*.34,VW*.22),170,320));MX=VW-MS-12;MY=VH-MS-12;if(cam){cam.x=cl(cam.x,0,W-VW);cam.y=cl(cam.y,0,W-VH)}}
 addEventListener('resize',fit);
 let AC=null,MG,SG,BG,NB=null;const lastS={};
 function au(){if(AC)return AC;try{AC=new (window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.connect(AC.destination);SG=AC.createGain();SG.connect(MG);BG=AC.createGain();BG.connect(MG);volApply()}catch(e){AC=null}return AC}
@@ -787,7 +787,7 @@ function bgPreview(id){try{const a=au();if(a&&a.state!=='running')a.resume()}cat
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tprev]');if(!b)return;e.stopPropagation();bgPreview(b.dataset.tprev)},true);
 const PN=[['11월 23일 저녁 업데이트',[
  ['⚔ 전투',['기지 공격 명령을 내리면 로봇들이 기지 앞(포탑 사거리 밖)에 공격 대형으로 모였다가 한꺼번에 돌격해요 (근접 앞 · 원거리 가운데 · 지원 뒤)','지원 로봇은 공격 명령 때 적 기지로 뛰어들지 않고 아군 뒤를 따라가요','여러 로봇에게 이동 명령을 내리면 가장 느린 로봇 속도에 맞춰 같이 움직여요 (진화한 지원 로봇이 혼자 앞서가지 않아요)']],
- ['🗺 미니맵',['우리 로봇이 미니맵에 더 크고 밝게 보여요 (전투 로봇 하늘색 · 채굴 주황 · 정찰 연노랑 · 선택한 로봇 노랑)']],
+ ['🗺 미니맵',['미니맵이 화면 크기에 맞춰 커졌어요 (보통 PC 화면에서 약 1.5배)','우리 로봇이 미니맵에 더 크고 밝게 보여요 (전투 로봇 하늘색 · 채굴 주황 · 정찰 연노랑 · 선택한 로봇 노랑)']],
  ['💎 청석',['게임이 끝날 때 받는 청석: 번 광석 총량의 3% → 4% (+ 정복한 기지마다 구역 × 10은 그대로)']],
  ['🛢 기름',['정찰 로봇에게 기름을 뿌리면 연료가 최대치의 50%만큼 채워져요 (최대치를 넘지 않아요)']],
  ['⛏ 채굴 로봇',['광산이 바닥나면 들고 있던 광석을 기지에 팔고 기지 옆에서 기다려요 (광산 앞에 멍하니 서 있지 않아요)']],
@@ -1452,7 +1452,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!
  h.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('button'))return;const r=w.getBoundingClientRect(),pr=$('stage').getBoundingClientRect();dg={dx:e.clientX-r.left,dy:e.clientY-r.top,pr};w.style.transform='none';w.style.left=(r.left-pr.left)+'px';w.style.top=(r.top-pr.top)+'px';h.setPointerCapture(e.pointerId);e.preventDefault()});
  h.addEventListener('pointermove',e=>{if(!dg)return;const pr=dg.pr,W=w.offsetWidth,H=w.offsetHeight;w.style.left=cl(e.clientX-pr.left-dg.dx,-W+120,pr.width-120)+'px';w.style.top=cl(e.clientY-pr.top-dg.dy,0,pr.height-50)+'px'});
  h.addEventListener('pointerup',()=>dg=null)})();
-const APPVER='20261124-015851';
+const APPVER='20261124-020151';
 function newVer(){if(scene==='lobby'&&$('boxw').hidden&&$('cashw').hidden){location.reload();return}$('updb').hidden=false}
 (function(){if(!/github\.io$/.test(location.hostname))return;const add=(rel,href)=>{const l=document.createElement('link');l.rel=rel;l.href=href;document.head.appendChild(l)};add('manifest','manifest.webmanifest');add('apple-touch-icon','icon-192.png');add('icon','icon-192.png');
  try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
